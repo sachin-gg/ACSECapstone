@@ -1,0 +1,71 @@
+{
+	"id": "585d697e4d0b41ed5d98ca2b313f33e4",
+	"_format": "hh-sol-build-info-1",
+	"solcVersion": "0.8.18",
+	"solcLongVersion": "0.8.18+commit.87f61d96",
+	"input": {
+		"language": "Solidity",
+		"sources": {
+			"Flightticket.sol": {
+				"content": "// SPDX-License-Identifier: MIT\r\n/*\r\n* Batch: ACSE IITM August 2022\r\n* Project: Problem Statement 3 - Blockchain based Ticket Management\r\n* Developers: \r\n    Anuradha\r\n    Reema\r\n    Mohan\r\n    Sachin Ghewde (SG) - <sachingg@hotmail.com>\r\n* Description:\r\n    \r\n*/\r\npragma solidity >=0.8.16 <0.9.0;"
+			}
+		},
+		"settings": {
+			"optimizer": {
+				"enabled": false,
+				"runs": 200
+			},
+			"outputSelection": {
+				"*": {
+					"": [
+						"ast"
+					],
+					"*": [
+						"abi",
+						"metadata",
+						"devdoc",
+						"userdoc",
+						"storageLayout",
+						"evm.legacyAssembly",
+						"evm.bytecode",
+						"evm.deployedBytecode",
+						"evm.methodIdentifiers",
+						"evm.gasEstimates",
+						"evm.assembly"
+					]
+				}
+			}
+		}
+	},
+	"output": {
+		"sources": {
+			"Flightticket.sol": {
+				"ast": {
+					"absolutePath": "Flightticket.sol",
+					"exportedSymbols": {},
+					"id": 2,
+					"license": "MIT",
+					"nodeType": "SourceUnit",
+					"nodes": [
+						{
+							"id": 1,
+							"literals": [
+								"solidity",
+								">=",
+								"0.8",
+								".16",
+								"<",
+								"0.9",
+								".0"
+							],
+							"nodeType": "PragmaDirective",
+							"src": "265:32:0"
+						}
+					],
+					"src": "265:32:0"
+				},
+				"id": 0
+			}
+		}
+	}
+}
