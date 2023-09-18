@@ -12,3 +12,10 @@
     
 */
 pragma solidity >=0.8.16 <0.9.0;
+
+
+contract FlightTicket{
+    address public airline;
+    address public customer;
+    string public flightNumber;
+}
