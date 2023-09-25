@@ -1,29 +1,10 @@
 ACSE IITM Capstone Project – Blockchain based Ticket Management
 ===============================================================
 
+*** See <Blockchain_InterMilestone_Group_Mohan.docx> ***
 ## Team Members
+    Mohan Sami (Group Lead)
+    Anuradha Kapoor
+    Reema Chhetri
+    Sachin Ghewde (SG) - <sachingg@hotmail.com>
 
-    Anuradha
-    Reema
-    Mohan
-    Sachin
-
-## ACESCapstonePoA Accounts
-
-### Faucet Account (could be used as Escrow)
-
-
-
-## ACESCapstonePoA Network
-
-
-
-### Node #1
-
-
-
-### Node #1
-
-
-
-### Node #1
