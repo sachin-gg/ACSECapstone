@@ -1,6 +1,15 @@
-# eaglepoa
+# Aggregated script of commands used to create and set up nodes and accounts
 
-## Create an eaglepoa (Step 1)
+## Download package information from configured sources (pre-requisite for all nodes)
+      sudo apt update
+      sudo apt-get update
+      sudo add-apt-repository -y ppa:ethereum/ethereum
+      
+## Install Ethereum and Geth (pre-requisite for all nodes)
+      sudo apt-get install ethereum
+      sudo apt-get upgrade geth
+
+## Create an eaglepoa (Step 1) (for all nodes)
       mkdir eaglepoa
       cd eaglepoa
 
