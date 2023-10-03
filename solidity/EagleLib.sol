@@ -30,29 +30,7 @@ Epoch time cannot represent any date before 1970 and won't be able to represent 
 *   For handling of strings, dates and other common functions/operations
 */
 library EagleLib {
-    // TicketStatus - enumerates various ticket states
-    //enum TicketStatus { DOES_NOT_EXIST, RESERVED, CANCELLATION_IN_PROGRESS, CANCELLED }
-    uint8 public constant Ticket_DOES_NOT_EXIST = 0;
-    uint8 public constant Ticket_RESERVED = 1;
-    uint8 public constant Ticket_CANCELLATION_IN_PROGRESS = 2;
-    uint8 public constant Ticket_CANCELED = 3;
-    // FlightStatus - enumerates various flight states
-    //enum FlightStatus { DOES_NOT_EXIST, SCHEDULED, ON_TIME, DELAYED, BOARDING, IN_AIR, CANCELLED, LANDED }
-    uint8 public constant Flight_DOES_NOT_EXIST = 0;
-    uint8 public constant Flight_SCHEDULED = 1;
-    uint8 public constant Flight_ON_TIME = 2;
-    uint8 public constant Flight_DELAYED = 3;
-    uint8 public constant Flight_BOARDING = 4;
-    uint8 public constant Flight_IN_AIR = 5;
-    uint8 public constant Flight_CANCELLED = 6;
-    uint8 public constant Flight_LANDED = 7;
-    // PaymentStatus - enumerates the payment states
-    //enum PaymentStatus { TRANSFERRED, PAID_IN_FULL, PAID_IN_PART } 
-    uint8 public constant Payment_PENDING = 0;
-    uint8 public constant Payment_COLLECTED = 1;
-    uint8 public constant Payment_REFUNDED = 2; // Settled by full refund to customer
-    uint8 public constant Payment_SPLIT = 3; // Settled by part refund to customer + part payment to airline
-    uint8 public  constant Payment_PAID = 4; // Settled by full payment to airline
+    /*
     // enum
     enum DatePart { YEAR, MONTH, DAY, HOUR, MINUTES, SECONDS }
     // As we will be deploying our library in 2023 (or later)
@@ -69,7 +47,9 @@ library EagleLib {
     uint constant SECONDS_PER_DAY = SECONDS_PER_HOUR * 24;
     uint constant SECONDS_PER_YEAR = SECONDS_PER_DAY * DAYS_IN_YEAR;
     uint constant SECONDS_PER_LEAP_YEAR = SECONDS_PER_DAY * DAYS_IN_LEAP_YEAR;
+    */
     //
+    /*
     struct DateTime {
         uint16 dt_year;
         uint8 dt_month;
@@ -84,7 +64,7 @@ library EagleLib {
         uint8 dt_month;
         uint8 dt_day;
     }
-    //
+    */
     function stringLength(string memory s) public pure returns (uint256) {
         return bytes(s).length;
     }
@@ -116,7 +96,7 @@ library EagleLib {
         }
         return string(bStr);
     }
-    //
+    /*
     function isLeapYear (uint16 year) internal pure returns (bool) {
         require(year > BASEYEAR && year < 2038, "!ERROR! isLeapYear: Invalid year.");
         if (year % 4 == 0 && year % 100 != 0) {
@@ -240,7 +220,7 @@ library EagleLib {
         }
         return year;
     }
-    
+    */
     function toString(uint256 value) internal pure returns (string memory) {
         if (value == 0) {
             return "0";
