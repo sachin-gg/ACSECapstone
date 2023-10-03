@@ -1,6 +1,6 @@
-# Aggregated script of commands used to create and set up nodes and accounts
+# Commands used to create and set up nodes and accounts
 
-## Download package information from configured sources (pre-requisite for all nodes)
+## Download package information (pre-requisite for all nodes)
       sudo apt update
       sudo apt-get update
       sudo add-apt-repository -y ppa:ethereum/ethereum
