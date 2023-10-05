@@ -1,0 +1,124 @@
+{
+	"compiler": {
+		"version": "0.8.18+commit.87f61d96"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "eagleAir",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "opAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "buyer",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "ticketNum",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "flightNum",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "seatNum",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "ticketAmount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "schDepTS",
+						"type": "uint256"
+					}
+				],
+				"name": "createTicket",
+				"outputs": [
+					{
+						"internalType": "contract EagleTicket",
+						"name": "ticketContract",
+						"type": "address"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"solidity/EagleAirline.sol": "EagleFactory"
+		},
+		"evmVersion": "paris",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"hardhat/console.sol": {
+			"keccak256": "0x7434453e6d3b7d0e5d0eb7846ffdbc27f0ccf3b163591263739b628074dc103a",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://49355f780520494d1d5a0f01858385e51bb5280ce0ecfb960f16995065dca395",
+				"dweb:/ipfs/QmSwJ6C5QLz6xKeQZS8wbwjU1KxRFTYfwbGmtzisd5sRW4"
+			]
+		},
+		"solidity/EagleAirline.sol": {
+			"keccak256": "0xa00be54667416d1d38aecb5c9a2024168615e2aff3022e80f372456474206232",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://dd2830eb79fb48315a33fd5047d47ef6f7ffca17bc5b48232bce68ede8a6276f",
+				"dweb:/ipfs/Qmb9P2AgQfogBh6GvuzXJ7A1KmSAAMyWFr3W74QBQgcYjH"
+			]
+		},
+		"solidity/EagleLib.sol": {
+			"keccak256": "0x9a49551fc904f38f951ba04151b5f8c1464b597b144b0f20bff88213ad38ef9b",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://2bd55810d50d085285b10ff4447b8c488952ed930d05ea2aa140cad45bdf882c",
+				"dweb:/ipfs/QmUKd9pNvJb4Kkh27YgnCe2QfZiDV5cpZYwSJDT5x6TVpE"
+			]
+		},
+		"solidity/EagleTicket.sol": {
+			"keccak256": "0xd1e7892cf0ceea2352badc3bc8d68605dd49e9e6a40bed99297f1bdd1b98ae56",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://ef1968063c58003deb4864492925bbf476c4a03a39503bd76891761e518452d4",
+				"dweb:/ipfs/QmWPjQpeucMQXah659vjVnKw7pmF1GSACdpNRqpWBb1ipE"
+			]
+		}
+	},
+	"version": 1
+}

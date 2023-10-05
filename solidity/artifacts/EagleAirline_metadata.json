@@ -9,7 +9,7 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "superUser",
+						"name": "factory",
 						"type": "address"
 					}
 				],
@@ -22,38 +22,13 @@
 					{
 						"indexed": false,
 						"internalType": "string",
-						"name": "airlineType",
-						"type": "string"
-					},
-					{
-						"indexed": false,
-						"internalType": "string",
 						"name": "airlineName",
-						"type": "string"
-					},
-					{
-						"indexed": false,
-						"internalType": "string",
-						"name": "airlineCode",
-						"type": "string"
-					}
-				],
-				"name": "AirlineRegistered",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": false,
-						"internalType": "string",
-						"name": "contractName",
 						"type": "string"
 					},
 					{
 						"indexed": true,
 						"internalType": "address",
-						"name": "contractAddress",
+						"name": "airlineContractAddress",
 						"type": "address"
 					}
 				],
@@ -66,36 +41,11 @@
 					{
 						"indexed": false,
 						"internalType": "string",
-						"name": "errorMessage",
+						"name": "name",
 						"type": "string"
 					}
 				],
-				"name": "ErrorMessage",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "airline",
-						"type": "address"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "flightNumber",
-						"type": "uint256"
-					},
-					{
-						"indexed": false,
-						"internalType": "string",
-						"name": "message",
-						"type": "string"
-					}
-				],
-				"name": "FlightCancelled",
+				"name": "CustomerRegistered",
 				"type": "event"
 			},
 			{
@@ -104,7 +54,7 @@
 					{
 						"indexed": false,
 						"internalType": "uint256",
-						"name": "flightNumber",
+						"name": "flightNum",
 						"type": "uint256"
 					},
 					{
@@ -123,13 +73,13 @@
 					{
 						"indexed": false,
 						"internalType": "uint256",
-						"name": "flightNumber",
+						"name": "flightNum",
 						"type": "uint256"
 					},
 					{
 						"indexed": false,
 						"internalType": "string",
-						"name": "updateMessage",
+						"name": "uMsg",
 						"type": "string"
 					}
 				],
@@ -142,47 +92,41 @@
 					{
 						"indexed": false,
 						"internalType": "string",
-						"name": "infoMessage",
+						"name": "operatorName",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "operatorCode",
 						"type": "string"
 					}
 				],
-				"name": "InfoMessage",
+				"name": "OperatorRegistered",
 				"type": "event"
 			},
 			{
 				"anonymous": false,
 				"inputs": [
 					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "fromAddress",
-						"type": "address"
-					},
-					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "toAddress",
-						"type": "address"
-					},
-					{
 						"indexed": false,
 						"internalType": "uint256",
-						"name": "amount",
+						"name": "ticketNum",
 						"type": "uint256"
 					},
 					{
-						"indexed": false,
-						"internalType": "string",
-						"name": "message",
-						"type": "string"
+						"indexed": true,
+						"internalType": "address",
+						"name": "ticketAddress",
+						"type": "address"
 					}
 				],
-				"name": "TransferredAmout",
+				"name": "TicketReserved",
 				"type": "event"
 			},
 			{
 				"inputs": [],
-				"name": "MAX_SEATING_CAPACITY",
+				"name": "MAX_SEATS",
 				"outputs": [
 					{
 						"internalType": "uint8",
@@ -195,7 +139,7 @@
 			},
 			{
 				"inputs": [],
-				"name": "TICKET_PRICE_DOMESTIC",
+				"name": "T_PRICE_DOM",
 				"outputs": [
 					{
 						"internalType": "uint256",
@@ -208,7 +152,7 @@
 			},
 			{
 				"inputs": [],
-				"name": "TICKET_PRICE_INTERNATIONAL",
+				"name": "T_PRICE_INT",
 				"outputs": [
 					{
 						"internalType": "uint256",
@@ -222,16 +166,40 @@
 			{
 				"inputs": [
 					{
+						"internalType": "address",
+						"name": "ticketContract",
+						"type": "address"
+					}
+				],
+				"name": "cancelTicket",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					},
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
 						"internalType": "uint256",
-						"name": "flightNumber",
+						"name": "flightNum",
 						"type": "uint256"
 					}
 				],
-				"name": "checkFlightStatus",
+				"name": "checkflightSts",
 				"outputs": [
 					{
 						"internalType": "string",
-						"name": "statusMessage",
+						"name": "",
 						"type": "string"
 					}
 				],
@@ -241,27 +209,32 @@
 			{
 				"inputs": [
 					{
-						"internalType": "uint256",
-						"name": "ticketNumber",
-						"type": "uint256"
+						"internalType": "address",
+						"name": "ticketContract",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "buyer",
+						"type": "address"
 					}
 				],
-				"name": "checkTicketstatus",
+				"name": "confirmTicket",
 				"outputs": [
 					{
 						"internalType": "bool",
-						"name": "success",
+						"name": "",
 						"type": "bool"
 					}
 				],
-				"stateMutability": "view",
+				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
 				"inputs": [
 					{
 						"internalType": "uint256",
-						"name": "flightNumber",
+						"name": "flightNum",
 						"type": "uint256"
 					}
 				],
@@ -269,7 +242,7 @@
 				"outputs": [
 					{
 						"internalType": "bool",
-						"name": "success",
+						"name": "",
 						"type": "bool"
 					}
 				],
@@ -280,7 +253,7 @@
 				"inputs": [
 					{
 						"internalType": "uint256",
-						"name": "flightNumber",
+						"name": "flightNum",
 						"type": "uint256"
 					}
 				],
@@ -288,7 +261,7 @@
 				"outputs": [
 					{
 						"internalType": "bool",
-						"name": "success",
+						"name": "",
 						"type": "bool"
 					}
 				],
@@ -299,12 +272,12 @@
 				"inputs": [
 					{
 						"internalType": "uint256",
-						"name": "flightNumber",
+						"name": "flightNum",
 						"type": "uint256"
 					},
 					{
 						"internalType": "uint256",
-						"name": "delayMinutesFromSchTime",
+						"name": "estDelayMinutes",
 						"type": "uint256"
 					}
 				],
@@ -312,7 +285,7 @@
 				"outputs": [
 					{
 						"internalType": "bool",
-						"name": "success",
+						"name": "",
 						"type": "bool"
 					}
 				],
@@ -323,7 +296,7 @@
 				"inputs": [
 					{
 						"internalType": "uint256",
-						"name": "flightNumber",
+						"name": "flightNum",
 						"type": "uint256"
 					}
 				],
@@ -331,7 +304,7 @@
 				"outputs": [
 					{
 						"internalType": "bool",
-						"name": "success",
+						"name": "",
 						"type": "bool"
 					}
 				],
@@ -342,7 +315,7 @@
 				"inputs": [
 					{
 						"internalType": "uint256",
-						"name": "flightNumber",
+						"name": "flightNum",
 						"type": "uint256"
 					}
 				],
@@ -350,7 +323,7 @@
 				"outputs": [
 					{
 						"internalType": "bool",
-						"name": "success",
+						"name": "",
 						"type": "bool"
 					}
 				],
@@ -361,7 +334,7 @@
 				"inputs": [
 					{
 						"internalType": "uint256",
-						"name": "flightNumber",
+						"name": "flightNum",
 						"type": "uint256"
 					}
 				],
@@ -369,7 +342,7 @@
 				"outputs": [
 					{
 						"internalType": "bool",
-						"name": "success",
+						"name": "",
 						"type": "bool"
 					}
 				],
@@ -380,7 +353,7 @@
 				"inputs": [
 					{
 						"internalType": "uint256",
-						"name": "flightNumber",
+						"name": "flightNum",
 						"type": "uint256"
 					}
 				],
@@ -399,16 +372,16 @@
 				"inputs": [
 					{
 						"internalType": "uint256",
-						"name": "ticketNumber",
+						"name": "flightNum",
 						"type": "uint256"
 					}
 				],
-				"name": "processRefund",
+				"name": "getflightSts",
 				"outputs": [
 					{
-						"internalType": "bool",
-						"name": "success",
-						"type": "bool"
+						"internalType": "uint8",
+						"name": "",
+						"type": "uint8"
 					}
 				],
 				"stateMutability": "view",
@@ -418,16 +391,36 @@
 				"inputs": [
 					{
 						"internalType": "uint256",
-						"name": "ticketNumber",
+						"name": "flightNum",
 						"type": "uint256"
 					}
 				],
-				"name": "refundStatus",
+				"name": "getflightStsTime",
 				"outputs": [
 					{
-						"internalType": "bool",
-						"name": "success",
-						"type": "bool"
+						"internalType": "uint8",
+						"name": "",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
 					}
 				],
 				"stateMutability": "view",
@@ -437,16 +430,71 @@
 				"inputs": [
 					{
 						"internalType": "string",
-						"name": "airlineName",
+						"name": "opName",
 						"type": "string"
 					},
 					{
 						"internalType": "string",
-						"name": "airlineCode",
+						"name": "opCode",
+						"type": "string"
+					},
+					{
+						"internalType": "enum EagleAirline.OpType",
+						"name": "opType",
+						"type": "uint8"
+					}
+				],
+				"name": "registerAirlineOperator",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "custName",
 						"type": "string"
 					}
 				],
-				"name": "registerDomesticAirline",
+				"name": "registerCustomer",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "flightNum",
+						"type": "uint256"
+					}
+				],
+				"name": "reserveTicket",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "ticketContract",
+						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "seatNum",
+						"type": "string"
+					}
+				],
+				"name": "selectSeat",
 				"outputs": [
 					{
 						"internalType": "bool",
@@ -460,32 +508,8 @@
 			{
 				"inputs": [
 					{
-						"internalType": "string",
-						"name": "airlineName",
-						"type": "string"
-					},
-					{
-						"internalType": "string",
-						"name": "airlineCode",
-						"type": "string"
-					}
-				],
-				"name": "registerInternationalAirline",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "success",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
 						"internalType": "uint256",
-						"name": "flightNumber",
+						"name": "flightNum",
 						"type": "uint256"
 					},
 					{
@@ -495,31 +519,49 @@
 					},
 					{
 						"internalType": "uint256",
-						"name": "schDepartureDatetime",
+						"name": "schDepTS",
 						"type": "uint256"
 					},
 					{
 						"internalType": "uint256",
-						"name": "schArrivalDatetime",
+						"name": "schArrTS",
 						"type": "uint256"
 					},
 					{
 						"internalType": "string",
-						"name": "flightOrigin",
+						"name": "origin",
 						"type": "string"
 					},
 					{
 						"internalType": "string",
-						"name": "flightDestination",
+						"name": "destination",
 						"type": "string"
 					}
 				],
 				"name": "setupFlight",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "ticketContract",
+						"type": "address"
+					}
+				],
+				"name": "voidTicket",
 				"outputs": [
 					{
 						"internalType": "bool",
-						"name": "success",
+						"name": "",
 						"type": "bool"
+					},
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
 					}
 				],
 				"stateMutability": "nonpayable",
@@ -547,7 +589,7 @@
 			"bytecodeHash": "ipfs"
 		},
 		"optimizer": {
-			"enabled": false,
+			"enabled": true,
 			"runs": 200
 		},
 		"remappings": []
@@ -562,19 +604,27 @@
 			]
 		},
 		"solidity/EagleAirline.sol": {
-			"keccak256": "0xd5607fff96dcf2954139acf5f3379ac5814cce65d11ab2f470a33d3246745550",
+			"keccak256": "0xa00be54667416d1d38aecb5c9a2024168615e2aff3022e80f372456474206232",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://1c0566232e5946fa490f3f15e7941b83f5180b5c7c2dae938c1ed8c7b066dcf3",
-				"dweb:/ipfs/QmXsxeZq7pVZY2UkDhJo6a4BM4DxvPKKWEPQmaXz2mNEbJ"
+				"bzz-raw://dd2830eb79fb48315a33fd5047d47ef6f7ffca17bc5b48232bce68ede8a6276f",
+				"dweb:/ipfs/Qmb9P2AgQfogBh6GvuzXJ7A1KmSAAMyWFr3W74QBQgcYjH"
 			]
 		},
 		"solidity/EagleLib.sol": {
-			"keccak256": "0x8aa84f0435d14b3c23e8504ee42d4aca03c97fd5e3483edb7076ecd8b2413b58",
+			"keccak256": "0x9a49551fc904f38f951ba04151b5f8c1464b597b144b0f20bff88213ad38ef9b",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://f3ba2eaf360bc0426a2c66d1d08adeb475ca906c992f471dbfdeaafe50241af5",
-				"dweb:/ipfs/QmaAiV79AY33cCjqgTxUkXREAZt2F5P3zRJCPGR3teB8Lm"
+				"bzz-raw://2bd55810d50d085285b10ff4447b8c488952ed930d05ea2aa140cad45bdf882c",
+				"dweb:/ipfs/QmUKd9pNvJb4Kkh27YgnCe2QfZiDV5cpZYwSJDT5x6TVpE"
+			]
+		},
+		"solidity/EagleTicket.sol": {
+			"keccak256": "0xd1e7892cf0ceea2352badc3bc8d68605dd49e9e6a40bed99297f1bdd1b98ae56",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://ef1968063c58003deb4864492925bbf476c4a03a39503bd76891761e518452d4",
+				"dweb:/ipfs/QmWPjQpeucMQXah659vjVnKw7pmF1GSACdpNRqpWBb1ipE"
 			]
 		}
 	},

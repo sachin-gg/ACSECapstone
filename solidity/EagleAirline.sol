@@ -58,8 +58,8 @@ contract EagleAirline {
     /// Airline Type - enumerates various Airline types
     enum OpType { DOM, INT } // DOMESTIC, INTERNATIONAL
     uint8 public constant MAX_SEATS = 100;
-    uint public constant T_PRICE_DOM = 10 * 10 ** 18; // ether;
-    uint public constant T_PRICE_INT = 50 * 10 ** 18; //ether;
+    uint public constant T_PRICE_DOM = 10 * 1e18; // * 10 ** 18; // ether;
+    uint public constant T_PRICE_INT = 50 * 1e18; // * 10 ** 18; //ether;
     
     // flightSts - enumerates various flight states
     //enum flightSts { DOES_NOT_EXIST, SCHEDULED, ON_TIME, DELAYED, BOARDING, IN_AIR, CANCELLED, LANDED }
@@ -146,12 +146,12 @@ contract EagleAirline {
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // EVENTS
-    event ContractCreated(string cName, address indexed cAdd);
-    event OperatorRegistered(string oName, string oCode);
+    event ContractCreated(string airlineName, address indexed airlineContractAddress);
+    event OperatorRegistered(string operatorName, string operatorCode);
     event CustomerRegistered(string name);
-    event FlightRegistered(uint fNum, string fName);
-    event FlightUpdate(uint fNum, string uMsg);
-    event TicketReserved(uint tNum, address indexed tAdd);
+    event FlightRegistered(uint flightNum, string flightName);
+    event FlightUpdate(uint flightNum, string uMsg);
+    event TicketReserved(uint ticketNum, address indexed ticketAddress);
     //event ErrorMessage(string errorMessage);
     //event InfoMessage(string infoMessage);
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -475,7 +475,7 @@ contract EagleAirline {
          );
         ticket.ticketContract = address(ticketContract);
         reservedTickMap[ticket.ticketContract] = ticket;
-        flightInfo.remSeats -= 1;
+        //flightInfo.remSeats -= 1;
         flightInfo.allTickets.push(address(ticketContract));
         emit TicketReserved(ticket.ticketNum, ticket.ticketContract);
         return (ticket.ticketContract);

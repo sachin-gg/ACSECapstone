@@ -151,8 +151,8 @@ contract EagleTicket {
     event InfoMessage(string infoMessage);
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // MODIFIERS
-    modifier OnlyOperator() {
-        require(msg.sender == address(_operatorAddress), "Only Airline Flight Operator allowed");
+    modifier OnlyAirlineContract() {
+        require(msg.sender == address(_eagleAirContract), "Only Airline Contract allowed");
         _;
     }
     //
@@ -276,8 +276,10 @@ contract EagleTicket {
     /*
     * SELECT SEAT - Allows buyers to select/change seats
     */
-    function selectSeat (string memory seatNumber) OnlyBuyer public returns (bool) {
-        return _eagleAirline.selectSeat(_ticketContract, seatNumber);
+    function selectSeat (string memory seatNumber) OnlyBuyer public returns (bool success) {
+        success = _eagleAirline.selectSeat(_ticketContract, seatNumber);
+        if(success)
+            _ticketInfo.seatNumber = seatNumber; 
     }
     
     function _getPercentRefund(uint delayTime, bool isDelayClaim) private pure returns (uint8) {
@@ -377,7 +379,7 @@ contract EagleTicket {
     }
 
     // !! PAYABLE !!
-    function closeTicket (uint8 flightStatus) OnlyOperator public payable returns (bool success) {
+    function closeTicket (uint8 flightStatus) OnlyAirlineContract public payable returns (bool success) {
         // Check ticket status
         string memory message;
         uint currTime = block.timestamp;
