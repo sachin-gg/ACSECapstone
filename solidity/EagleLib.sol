@@ -18,7 +18,7 @@
 */
 pragma solidity ^0.8.17;
 // For console.log
-import "hardhat/console.sol";
+//import "hardhat/console.sol";
 /*
 EPOCH refers to various timestamp representation, but usually it is known as UNIX timestamp.
 It is a 32-bit integer value starting from 0, which represents 1970-01-01T00:00:00Z.
@@ -221,27 +221,4 @@ library EagleLib {
         return year;
     }
     */
-    function toString(uint256 value) internal pure returns (string memory) {
-        if (value == 0) {
-            return "0";
-        }
-        uint256 temp = value;
-        uint256 digits;
-        while (temp != 0) {
-            digits++;
-            temp /= 10;
-        }
-        bytes memory buffer = new bytes(digits);
-        while (value != 0) {
-            digits -= 1;
-            buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
-            value /= 10;
-        }
-        return string(buffer);
-    }
-    
-    // Function to compare two strings.
-    function compareStrings(string memory value1, string memory value2) public pure returns (bool) {
-        return (keccak256(abi.encodePacked(value1)) == keccak256(abi.encodePacked(value2)));
-    }
 }

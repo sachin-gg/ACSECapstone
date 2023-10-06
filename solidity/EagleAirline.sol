@@ -19,7 +19,7 @@
 
 pragma solidity ^0.8.17;
 // For console.log
-import "hardhat/console.sol";
+//import "hardhat/console.sol";
 import "./EagleLib.sol";
 import "./EagleTicket.sol";
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -102,9 +102,10 @@ contract EagleAirline {
         string origin; // Origin Airport Code
         string destination; // Destination Airport Code
         uint8 flightSts; // last known status of flight
-        uint flightStsTS; // last flight status update date time
+        //uint flightStsTS; // last flight status update date time
+        uint preflightStsTS; // last flight status update date time
         uint8 remSeats;
-        bool tixAvl;
+        bool seatsAvl;
         bool active;
         address[] allTickets; // open Ticket Contracts
     }
@@ -147,7 +148,7 @@ contract EagleAirline {
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // EVENTS
     event ContractCreated(string airlineName, address indexed airlineContractAddress);
-    event OperatorRegistered(string operatorName, string operatorCode);
+    event OperatorRegistered(string operatorType, string operatorName, string operatorCode);
     event CustomerRegistered(string name);
     event FlightRegistered(uint flightNum, string flightName);
     event FlightUpdate(uint flightNum, string uMsg);
@@ -192,132 +193,19 @@ contract EagleAirline {
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
-    // OTHER/COMMON Functions
-    function getflightSts(uint flightNum) public view returns (uint8) {
-        require (flightNum == flightMap[flightNum].flightNum, "Unknown Flight");
-        return flightMap[flightNum].flightSts;
-    }
-    //
-    function getflightStsTime(uint flightNum) public view returns (uint8, uint, uint, uint, uint) {
-        require (flightNum == flightMap[flightNum].flightNum, "UNKNOWN");
-        uint8 flightSts = flightMap[flightNum].flightSts;
-        uint schDeparturetTS = flightMap[flightNum].schDepTS;
-        uint schArrivalTS = flightMap[flightNum].schArrTS;
-        uint newDeparturetTS = schDeparturetTS;
-        uint newArrivalTS = schArrivalTS;
-        //uint currTime = block.timestamp; 
-        uint delayTime = (flightMap[flightNum].delayMinutes * 60 seconds);
-        if (flightSts <= FL_BRDG && delayTime > 0) {
-            // Scheduled + Delay
-            newDeparturetTS = schDeparturetTS + delayTime;
-            newArrivalTS = schArrivalTS + delayTime;
-        } else if (flightSts == FL_LAND) {
-            // Actual
-            newDeparturetTS = flightMap[flightNum].actDepTS;
-            newArrivalTS = flightMap[flightNum].actArrTS;
-        } else {
-            newDeparturetTS = 0;
-            newArrivalTS = 0;
-        }
-        return (flightSts, schDeparturetTS, newDeparturetTS, newDeparturetTS, newArrivalTS);
-    }
-
-    // check flight status
-    function checkflightSts(uint flightNum) public view returns (string memory) {
-        require (flightNum == flightMap[flightNum].flightNum, "Unknown Flight");
-        uint8 fSts = flightMap[flightNum].flightSts; //f lightStatus
-        bool tAvl = flightMap[flightNum].tixAvl; // tixAvl
-        uint8 rCap = flightMap[flightNum].remSeats; // remSeats
-        string memory avl = (
-            (tAvl && rCap > 0)
-            ? string.concat(" (Avl: ", EagleLib.uintToString(rCap), ")")
-            : " (Avl: 0)"
-        );
-        if (fSts == FL_SCH) {
-            return string.concat("SCHEDULED", avl);
-        } else if (fSts == FL_ONTIME) {
-            return string.concat("ON-TIME", avl);
-        } else if (fSts == FL_DLYD) {
-            return string.concat("DELAYED", avl);
-        } else if (fSts == FL_BRDG) {
-            return string.concat("BOARDING", avl);
-        } else if (fSts == FL_AIR) {
-            return "IN-AIR";
-        } else if (fSts == FL_CNCL) {
-            return "CANCELLED";
-        } else if (fSts == FL_LAND) {
-            return "LANDED";
-        } else {
-            revert("UNKNOWN");
-        }
-    }
-
-    // Helper function to Unblock seat number after cancellation
-    function _unblockSeat(uint flightNum, string memory seatNum) private returns (bool) {
-        delete(flightSeatTickMap[flightNum][seatNum]);
-        return (flightSeatTickMap[flightNum][seatNum] == address(0) ? true : false);
-    }
-
+    // EXTERNAL functions
     /*
-    * registerCustomer - Allows Customers to register with Eagle Airlines
+    * register DOMESTICE / INTERNATIONAL operator
     */
-    function registerCustomer (string memory custName) noAirlines noCustomers public {
-        require(EagleLib.stringLength(custName) > 0, "Name reqd");
-        if (customerMap[msg.sender].custAddress == msg.sender) {
-            customerMap[msg.sender].custName = custName;
-        } else {
-            // We've a new customer
-            CustomerInfo memory newCustomer = CustomerInfo({
-                custAddress: payable(msg.sender),
-                custName: custName,
-                active: true
-            });
-            customerMap[msg.sender] = newCustomer;
-            //ARMSToken(_tokenARMS).transferFrom(payable(_owner), payable(newCustomer.custAddress), 91*10**18);
-            emit CustomerRegistered(custName);
-        }
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////
-    // AIRLINE Functions
-    /*
-    * _registerAirlineOperator - Airline Operator registration helper function
-    */
-    //function _registerAirlineOperator (string memory opName, string memory opCode, OpType opType) private returns  (bool success) {
-    function registerAirlineOperator (string memory opName, string memory opCode, OpType opType) public  {
-        OperatorInfo memory operator = OperatorInfo({
-            opAddress: payable(msg.sender),
-            opType: opType,
-            opName: opName,
-            opCode: opCode,
-            active: true
-        });
-        if (operatorMap[operator.opAddress].active) {
-            revert ("Existing");
-            //revert (string.concat("Existing-", operatorMap[operator.opAddress].opName));
-        } else {
-            // We've a new Operator; add it to the map
-            operatorMap[operator.opAddress] = operator;
-            //ARMSToken(_tokenARMS).transferFrom(payable(_owner), payable(operator.opAddress), 95*10**18);
-            emit OperatorRegistered(opName, opCode);
-        }
-    }
-
-       /*
-    function registerDomesticOperator (string memory opName, string memory opCode) noCustomers public returns () {
-        require(
-            _registerAirlineOperator(opName, opCode, OpType.DOM), 
-            "ERR: Not Registered"
-        );
+    function registerDomesticOperator (string memory opName, string memory opCode) external noCustomers {
+        require(_registerAirlineOperator(opName, opCode, OpType.DOM), "ERR: Not Registered");
         emit OperatorRegistered("DOMESTIC", opName, opCode);
     }
 
-    function registerInternationalOperator (string memory opName, string memory opCode) noCustomers public returns () {
-        success = _registerAirlineOperator(opName, opCode, OpType.INT);
-        require(success, "Failed to Register Airline Operator");
-        emit OperatorRegistered("INT", opName, opCode);
+    function registerInternationalOperator (string memory opName, string memory opCode) external noCustomers {
+        require(_registerAirlineOperator(opName, opCode, OpType.INT), "ERR: Not Registered");
+        emit OperatorRegistered("INTERNATIONAL", opName, opCode);
     }
-    */
 
     /*
     * setupFlight - Allows Airline operators to setup flight info
@@ -331,8 +219,7 @@ contract EagleAirline {
             string memory destination // Destination Airport Code
             //uint seatingCapacity,
             //uint fixedPrice
-        ) 
-        onlyAirlines public {
+    ) external onlyAirlines {
         //onlyAirlines public returns (bool success) {
         if (flightMap[flightNum].active) {
             //success = true;
@@ -350,9 +237,9 @@ contract EagleAirline {
             flight.origin = origin;
             flight.destination = destination;
             flight.flightSts = FL_SCH;
-            flight.flightStsTS = block.timestamp;
+            //flight.flightStsTS = block.timestamp;
             flight.remSeats = MAX_SEATS;
-            flight.tixAvl = true;
+            flight.seatsAvl = true;
             flight.active = true;
             flightMap[flightNum] = flight;
             //success = true;
@@ -360,53 +247,43 @@ contract EagleAirline {
         }
     }
 
-
     /*
     * FLIGHT STATUS UPDATE functions - Allows Airline operator to update Flight status 
     */
-    function _updateflightSts (uint flightNum, string memory stsTxt, uint8 flightSts, uint delayMinutes) private returns (bool success) {
-        flightMap[flightNum].flightSts = flightSts;
-        flightMap[flightNum].flightStsTS = block.timestamp;
-        flightMap[flightNum].delayMinutes = delayMinutes;
-        if (flightSts == FL_LAND)
-            success = _closeFlight(flightNum, flightSts);
-        emit FlightUpdate(flightNum, stsTxt);
-    }
-
-    function flightSOLDOUT (uint flightNum) onlyOperator(flightNum) 
+    function flightSoldOut(uint flightNum) onlyOperator(flightNum) 
         public returns (bool success) {
         require (
             flightMap[flightNum].flightSts >= FL_SCH 
             && flightMap[flightNum].flightSts <= FL_BRDG,
-            "NOT UPDTable"
+            "ERR: Not Updateable"
         );
-        flightMap[flightNum].tixAvl = false;
-        flightMap[flightNum].flightStsTS = block.timestamp;
+        flightMap[flightNum].seatsAvl = false;
+        //flightMap[flightNum].flightStsTS = block.timestamp;
         success = true;
         emit FlightUpdate(flightNum, "SOLDOUT");
     }
 
-    function flightONTIME (uint flightNum) onlyOperator(flightNum)  public returns (bool) {
+    function flightOnTime(uint flightNum) onlyOperator(flightNum)  public returns (bool) {
         return _updateflightSts(flightNum, "ON-TIME", FL_ONTIME, 0);
     }
 
-    function flightDELAYED (uint flightNum, uint estDelayMinutes) onlyOperator(flightNum)  public returns (bool) {
-        require(estDelayMinutes > 0, "Inv delay time");
+    function flightDelayed(uint flightNum, uint estDelayMinutes) onlyOperator(flightNum)  public returns (bool) {
+        require(estDelayMinutes > 0, "ERR: Inv delay time");
         return _updateflightSts(flightNum, string.concat("DELAYED (min): ", EagleLib.uintToString (estDelayMinutes)), FL_DLYD, estDelayMinutes);
     }
 
-    function flightBOARDING (uint flightNum) onlyOperator(flightNum) public returns (bool) {
+    function flightBoarding(uint flightNum) onlyOperator(flightNum) public returns (bool) {
         uint currTime = block.timestamp;
         uint calcDelayMinutes = (
             (currTime > flightMap[flightNum].schDepTS)
             ? (currTime - flightMap[flightNum].schDepTS) / 60 seconds
             : flightMap[flightNum].delayMinutes
         );
-        flightMap[flightNum].tixAvl = false;
+        flightMap[flightNum].seatsAvl = false;
         return _updateflightSts(flightNum, "BOARDING", FL_BRDG, calcDelayMinutes);
     }
 
-    function flightINAIR (uint flightNum) onlyOperator(flightNum) public returns (bool) {
+    function flightInAir(uint flightNum) onlyOperator(flightNum) public returns (bool) {
         uint currTime = block.timestamp;
         uint calcDelayMinutes = (
             (currTime > flightMap[flightNum].schDepTS)
@@ -417,20 +294,20 @@ contract EagleAirline {
         return _updateflightSts(flightNum, "IN-AIR", FL_AIR, calcDelayMinutes);
     }
 
-    function flightCANCELLED (uint flightNum) onlyOperator(flightNum) public returns (bool) {
+    function flightCancelled(uint flightNum) onlyOperator(flightNum) public returns (bool) {
         require (
             flightMap[flightNum].flightSts >= FL_SCH 
             && flightMap[flightNum].flightSts <= FL_BRDG,
-            "NOT CNCLable"
+            "ERR: NOT Canceleable"
         );
         flightMap[flightNum].actDepTS = 0;
         flightMap[flightNum].actArrTS = 0;
-        flightMap[flightNum].tixAvl = false;
+        flightMap[flightNum].seatsAvl = false;
         return _updateflightSts(flightNum, "CANCELLED", FL_CNCL, 0);
     }
 
-    function flightLANDED (uint flightNum) onlyOperator(flightNum) public returns (bool) {
-        require (flightMap[flightNum].flightSts == FL_AIR, "NOT UPDATETABLE");
+    function flightLanded(uint flightNum) onlyOperator(flightNum) public returns (bool) {
+        require (flightMap[flightNum].flightSts == FL_AIR, "ERR: Not updateable");
         uint currTime = block.timestamp;
         uint calcDelayMinutes = (
             (currTime > flightMap[flightNum].schArrTS)
@@ -438,8 +315,28 @@ contract EagleAirline {
             : 0
         );
         flightMap[flightNum].actArrTS = currTime;
-        flightMap[flightNum].tixAvl = false;
+        flightMap[flightNum].seatsAvl = false;
         return _updateflightSts(flightNum, "LANDED", FL_LAND, calcDelayMinutes);
+    }
+
+    /*
+    * registerCustomer - Allows Customers to register with Eagle Airlines
+    */
+    function registerCustomer (string memory custName) external noAirlines noCustomers {
+        require(EagleLib.stringLength(custName) > 0, "ERR: Name reqd");
+        if (customerMap[msg.sender].custAddress == msg.sender) {
+            customerMap[msg.sender].custName = custName;
+        } else {
+            // We've a new customer
+            CustomerInfo memory newCustomer = CustomerInfo({
+                custAddress: payable(msg.sender),
+                custName: custName,
+                active: true
+            });
+            customerMap[msg.sender] = newCustomer;
+            //ARMSToken(_tokenARMS).transferFrom(payable(_owner), payable(newCustomer.custAddress), 91*10**18);
+            emit CustomerRegistered(custName);
+        }
     }
 
     /*
@@ -447,9 +344,9 @@ contract EagleAirline {
     */
     // TODO: check modifier
     function reserveTicket(uint flightNum) onlyCustomers  external returns (address) {
-        require(flightMap[flightNum].active, "Inv Flight");
+        require(flightMap[flightNum].active, "ERR: Inv Flight");
         FlightInfo storage flightInfo = flightMap[flightNum];
-        require(flightInfo.tixAvl && flightInfo.remSeats > 0, "ERR: NO SEATS AVL");
+        require(flightInfo.seatsAvl && flightInfo.remSeats > 0, "ERR: NO SEATS AVL");
         // Create Ticket
         TicketInfo memory ticket = TicketInfo({
             ticketContract: address(0),
@@ -484,14 +381,14 @@ contract EagleAirline {
     /*
     * Confirm Ticket: Allows buyers to pay and confirm the ticket via the EagleTicket contract instance
     */
-    function confirmTicket(address ticketContract, address buyer) onlyPndTickContracts public returns (bool) {
+    function confirmTicket(address ticketContract, address buyer) external onlyPndTickContracts returns (bool) {
         TicketInfo memory ticket = reservedTickMap[ticketContract];
         uint flightNum = ticket.flightNum;
-        require(flightNum > 0, "Inv Ticket");
+        require(flightNum > 0, "ERR: Inv Ticket");
         CustomerInfo memory customer = customerMap[buyer];
         require(customer.active, "Inv Customer");
         // decrement seating capacity
-        require(flightMap[flightNum].remSeats > 0, "No seats avl");
+        require(flightMap[flightNum].remSeats > 0, "ERR: No seats avl");
         flightMap[flightNum].remSeats--;       
         // move ticket to confirmed list
         delete(reservedTickMap[ticketContract]);
@@ -504,7 +401,7 @@ contract EagleAirline {
     /*
     * Void Ticket: Allows buyers to cancel reserved tickets
     */
-    function voidTicket(address ticketContract) onlyPndTickContracts public returns (bool, string memory) {
+    function voidTicket(address ticketContract) external onlyPndTickContracts returns (bool, string memory) {
         // delete reserved ticket
         TicketInfo memory ticket = reservedTickMap[ticketContract];
         delete(reservedTickMap[ticketContract]);
@@ -515,10 +412,10 @@ contract EagleAirline {
     /*
     * Cancel Ticket: Allows buyers to cancel confirmed tickets
     */
-    function cancelTicket(address ticketContract) onlyCnfrdTickContracts public returns (bool, string memory) {
+    function cancelTicket(address ticketContract) external onlyCnfrdTickContracts returns (bool, string memory) {
         TicketInfo memory ticket = confirmedTickMap[ticketContract];
         uint flightNum = ticket.flightNum;
-        require(flightNum > 0, "Inv Ticket");
+        require(flightNum > 0, "ERR: Inv Ticket");
         // unblock seat
         _unblockSeat (flightNum, ticket.seatNum); // unblock previously held seat
         flightMap[flightNum].remSeats++;
@@ -528,7 +425,7 @@ contract EagleAirline {
         return (true, "Ticket cancelled");
     }
 
-    function selectSeat (address ticketContract, string memory seatNum) onlyCnfrdTickContracts() public returns (bool success) {
+    function selectSeat (address ticketContract, string memory seatNum) external onlyCnfrdTickContracts returns (bool success) {
         TicketInfo storage ticket = confirmedTickMap[ticketContract];
         address f_seatTicketContract = flightSeatTickMap[ticket.flightNum][seatNum];
         string memory f_ticketseatNum = (EagleLib.stringCompare(ticket.seatNum, "NA")) ?  "" : ticket.seatNum;
@@ -537,7 +434,7 @@ contract EagleAirline {
             revert("No change");
         } else if (f_seatTicketContract != ticketContract && f_seatTicketContract != address(0)) {
             success = false;
-            revert("Seat blocked");
+            revert("ERR: Seat already assigned");
         } else {
             if (!EagleLib.stringCompare(f_ticketseatNum, seatNum)) {
                 _unblockSeat (ticket.flightNum, f_ticketseatNum); // unblock previously held seat
@@ -549,7 +446,127 @@ contract EagleAirline {
         //require(success, "ERR: Seat assignment failed");
     }
 
-    function _closeFlight(uint flightNum, uint8 flightSts) onlyOperator(flightNum) private returns (bool success) {
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    // PUBLIC functions
+    /*
+    * Flight status functions - Allows anyone to check the status of a flight
+    */
+    function checkflightSts(uint flightNum) public view returns (string memory) {
+        require (flightNum == flightMap[flightNum].flightNum, "Unknown Flight");
+        uint8 fSts = flightMap[flightNum].flightSts; //f lightStatus
+        bool tAvl = flightMap[flightNum].seatsAvl; // seatsAvl
+        uint8 rCap = flightMap[flightNum].remSeats; // remSeats
+        string memory avl = (
+            (tAvl && rCap > 0)
+            ? string.concat(" (Avl: ", EagleLib.uintToString(rCap), ")")
+            : " (Avl: 0)"
+        );
+        if (fSts == FL_SCH) {
+            return string.concat("SCHEDULED", avl);
+        } else if (fSts == FL_ONTIME) {
+            return string.concat("ON-TIME", avl);
+        } else if (fSts == FL_DLYD) {
+            return string.concat("DELAYED", avl);
+        } else if (fSts == FL_BRDG) {
+            return string.concat("BOARDING", avl);
+        } else if (fSts == FL_AIR) {
+            return "IN-AIR";
+        } else if (fSts == FL_CNCL) {
+            return "CANCELLED";
+        } else if (fSts == FL_LAND) {
+            return "LANDED";
+        } else {
+            revert("ERR: Unknown Flight");
+        }
+    }
+    //
+    function getflightSts(uint flightNum) public view returns (uint8) {
+        require (flightNum == flightMap[flightNum].flightNum, "ERR: Unknown Flight");
+        return flightMap[flightNum].flightSts;
+    }
+    //
+    function getflightStsTime(uint flightNum) public view returns (uint8, uint, uint, uint, uint, uint) {
+        require (flightMap[flightNum].active, "ERR: Unknown Flight");
+        FlightInfo memory flight = flightMap[flightNum];
+        uint8 flightSts = flight.flightSts;
+        uint schDeparturetTS = flight.schDepTS;
+        uint schArrivalTS = flight.schArrTS;
+        uint newDeparturetTS = schDeparturetTS;
+        uint newArrivalTS = schArrivalTS;
+        uint preflightStsTS = flight.preflightStsTS;
+        //uint currTime = block.timestamp; 
+        uint delayTime = (flight.delayMinutes * 60 seconds);
+        if (flightSts <= FL_BRDG && delayTime > 0) {
+            // Scheduled + Delay
+            newDeparturetTS = schDeparturetTS + delayTime;
+            newArrivalTS = schArrivalTS + delayTime;
+        } else if (flightSts == FL_LAND) {
+            // Actual
+            newDeparturetTS = flight.actDepTS;
+            newArrivalTS = flight.actArrTS;
+        } else {
+            newDeparturetTS = 0;
+            newArrivalTS = 0;
+        }
+        return (flightSts, schDeparturetTS, newDeparturetTS, newDeparturetTS, newArrivalTS, preflightStsTS);
+    }
+    
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    // PRIVATE functions
+    /*
+    * _unblockSeat Helper function to Unblock seat number after cancellation
+    */
+    function _unblockSeat(uint flightNum, string memory seatNum) private returns (bool) {
+        delete(flightSeatTickMap[flightNum][seatNum]);
+        return (flightSeatTickMap[flightNum][seatNum] == address(0) ? true : false);
+    }
+
+    /*
+    * _registerAirlineOperator - Airline Operator registration helper function
+    */
+    function _registerAirlineOperator (string memory opName, string memory opCode, OpType opType) private returns  (bool) {
+    //function registerAirlineOperator (string memory opName, string memory opCode, OpType opType) public  {
+        require(!operatorMap[msg.sender].active, "ERR: Operator already registered");
+        //
+        OperatorInfo memory operator = OperatorInfo({
+            opAddress: payable(msg.sender),
+            opType: opType,
+            opName: opName,
+            opCode: opCode,
+            active: true
+        });
+        // We've a new Operator; add it to the map
+        operatorMap[operator.opAddress] = operator;
+        //ARMSToken(_tokenARMS).transferFrom(payable(_owner), payable(operator.opAddress), 95*10**18);
+        //emit OperatorRegistered(opName, opCode);
+        return true;
+    }
+
+    /*
+    * update flighht - Allows Airline operator to update Flight status 
+    */
+    function _updateflightSts (uint flightNum, string memory stsTxt, uint8 flightSts, uint delayMinutes) private returns (bool success) {
+        uint currTime = block.timestamp;
+        FlightInfo storage flight = flightMap[flightNum];
+        flight.flightSts = flightSts;
+        //flight.flightStsTS = block.timestamp;
+        flight.delayMinutes = delayMinutes;
+        if (currTime > (flight.schDepTS - 24 hours) && currTime < flight.schDepTS) {
+            // IS the status being updated within the 24 hour window 
+            flight.preflightStsTS = currTime;
+        }
+        if (flightSts == FL_LAND)
+            success = _closeFlight(flightNum, flightSts, flight.schDepTS, flight.actDepTS, flight.preflightStsTS);
+        emit FlightUpdate(flightNum, stsTxt);
+    }
+
+
+    /*
+    * Close flight
+    */
+    function _closeFlight(uint flightNum, uint8 flightSts, uint schDepTS, uint actDepTS, uint preflightStsTS)  private returns (bool success) {
         require(flightSts == FL_CNCL || flightSts == FL_LAND, "ERR: Invalid Flight Status");
         address[] memory allTickets = flightMap[flightNum].allTickets;
         for(uint i = 0; i < allTickets.length; i++) {
@@ -562,7 +579,7 @@ contract EagleAirline {
                 delete(reservedTickMap[allTickets[i]]);
             }
             //
-            success = EagleTicket(ticket.ticketContract).closeTicket(flightSts);
+            success = EagleTicket(ticket.ticketContract).closeTicket(flightSts, schDepTS, actDepTS, preflightStsTS);
             closedTickMap[allTickets[i]] = ticket;             
         }
     }

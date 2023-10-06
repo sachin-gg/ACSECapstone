@@ -96,27 +96,27 @@
 			]
 		},
 		"solidity/EagleAirline.sol": {
-			"keccak256": "0xa00be54667416d1d38aecb5c9a2024168615e2aff3022e80f372456474206232",
+			"keccak256": "0x7809e0f82360da16d8d6e5c8b598c95f2df182b2b591f258c9b5f007c90459d0",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://dd2830eb79fb48315a33fd5047d47ef6f7ffca17bc5b48232bce68ede8a6276f",
-				"dweb:/ipfs/Qmb9P2AgQfogBh6GvuzXJ7A1KmSAAMyWFr3W74QBQgcYjH"
+				"bzz-raw://72134d9af365fe732c64d4a73c8af8f062a7238aa5edcc5a4e1372597e2a0cf4",
+				"dweb:/ipfs/QmRLWWfRt9JenJKfUZZmP1wnUDvfDe6oDrJ1Pt2kvvPaax"
 			]
 		},
 		"solidity/EagleLib.sol": {
-			"keccak256": "0x9a49551fc904f38f951ba04151b5f8c1464b597b144b0f20bff88213ad38ef9b",
+			"keccak256": "0xeedb05abac66c232ba13dec06854448c79f20373a8e04f7f1e467472140ea8ee",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://2bd55810d50d085285b10ff4447b8c488952ed930d05ea2aa140cad45bdf882c",
-				"dweb:/ipfs/QmUKd9pNvJb4Kkh27YgnCe2QfZiDV5cpZYwSJDT5x6TVpE"
+				"bzz-raw://e7e055bcad1c5f39258dc054d1689762dcfb50bde4b1bf0194ba28b0d3e034a3",
+				"dweb:/ipfs/QmbFT27nUmKARGfvAp3F2GfGTrvJahqqdeZwQBGUBj87LK"
 			]
 		},
 		"solidity/EagleTicket.sol": {
-			"keccak256": "0xd1e7892cf0ceea2352badc3bc8d68605dd49e9e6a40bed99297f1bdd1b98ae56",
+			"keccak256": "0xd8f100bb50854a68beb3904ecf8a0d726399a98ac0089c156828aebda889decc",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://ef1968063c58003deb4864492925bbf476c4a03a39503bd76891761e518452d4",
-				"dweb:/ipfs/QmWPjQpeucMQXah659vjVnKw7pmF1GSACdpNRqpWBb1ipE"
+				"bzz-raw://3f78c02b75feda06ab77e49da3cd3ad72c0a698b60000169296b0d7349ae7a7d",
+				"dweb:/ipfs/QmNp1LxcSca9rDPAWeEzaYUDD7cMHfMkUgu4ZX9HmYZJEd"
 			]
 		}
 	},

@@ -141,11 +141,12 @@ contract EagleTicket {
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // EVENTS
     event ContractCreated(string contractName, address indexed contractAddress);
-    event TicketReserved (uint flightNumber, uint ticketNumber, uint transferredAmount, string message);
-    event TicketUpdate(uint ticketNumber, string message);
+    //event TicketReserved (uint flightNumber, uint ticketNumber, uint transferredAmount, string message);
+    event TicketConfirmed(uint flightNumber, uint ticketNumber, uint transferredAmount, uint collectedAmount, string message);
     event TicketCancelled(uint ticketNumber, string message);
+    event TicketClosed(uint ticketNumber, string message);
     event TicketRefundClaimed(uint ticketNumber, string message);
-    event ViewTicket(uint ticketNumber, uint flightNumber, string seatNumber, string ticketStatus, string paymentStatus);
+    event ViewTicket(uint ticketNumber, uint flightNumber, string seatNumber, string ticketStatus, string paymentStatus, uint collectedAmount);
     //event TicketCancelled (address indexed airline, address indexed customer, uint flightNumber, uint ticketNumber, string message);
     event ErrorMessage(string errorMessage);
     event InfoMessage(string infoMessage);
@@ -178,43 +179,11 @@ contract EagleTicket {
         _;
     }
     */
-    ///////////////////////////////////////////////////////////////////////////////////////////////
-    // OTHER/COMMON Functions
-     // Helper function to get ticket status text
-    function _getTicketStatusText (uint status) private pure returns (string memory) {
-        if (status == TICKET_RESERVED) {
-            return "RESERVED";
-        } else if (status == TICKET_CONFIRMED) {
-            return "CONFIRMED";
-        } else if (status == TICKET_CANCELLATION_IN_PROGRESS) {
-            return "CANCELLATION-IN-PROGRESS";
-        } else if (status == TICKET_CANCELLED) {
-            return "CANCELLED";
-        } else {
-            return "UNKNOWN";
-        }
-    }
-    //
-    // Helper function to get ticket status text
-    function _getPaymentStatusText (uint status) private pure returns (string memory) {
-        if (status == PAYMENT_PENDING) {
-            return "PENDING";
-        } else if (status == PAYMENT_COLLECTED) {
-            return "COLLECTED";
-        } else if (status == PAYMENT_REFUNDED) {
-            return "REFUNDED";
-        } else if (status == PAYMENT_SPLIT) {
-            return "SPLIT";
-        } else if (status == PAYMENT_PAID) {
-            return "PAID";
-        } else {
-            return "UNKNOWN";
-        }
-    }   
+    
     /*
     * VIEW TICKET INFO - Allows customers to get view ticket information
     */
-    function viewTicketInfo() OnlyBuyerOrOpertor public {
+    function viewTicketInfo() external OnlyBuyerOrOpertor {
         string memory ticketStatus = _getTicketStatusText(_ticketStatus);
         string memory paymentStatus = _getPaymentStatusText(_paymentStatus);
         emit ViewTicket (
@@ -222,37 +191,25 @@ contract EagleTicket {
             _ticketInfo.flightNumber, 
             _ticketInfo.seatNumber, 
             ticketStatus,
-            paymentStatus
+            paymentStatus,
+            _ticketInfo.collectedAmount
         );
     }
-
-    /*TODO:
-    claimRefund - buyer
-    
-    flightCancelled - operator
-    flightComplete - operator
-    autoCancel - operator
-    */
-
 
     // !! PAYABLE !!
     /*
     * COMPLETE PURCHASE - Allows buyers to pay & complete payment for the ticket
     */
-    function completePayment ()
-        OnlyBuyer
-        public payable 
-        returns (bool success) {
+    function completePayment () external payable OnlyBuyer returns (bool success) {
         success = false;
         uint ticketPrice =  _ticketInfo.ticketAmount;
-        console.log(msg.value, ticketPrice);
-        require(msg.value > ticketPrice, "Insufficient Amount provided to complete purchase");
+        //console.log(msg.value, ticketPrice);
+        require(msg.value >= ticketPrice, "Insufficient Amount provided to complete purchase");
         // Confirm with Airline
         success = _eagleAirline.confirmTicket(_ticketContract, msg.sender);
         require(success, "ERR: Ticket purchase failed");
         // Transfer funds, if any back to customer (sender)
         uint256 transferAmount = (msg.value - ticketPrice);
-        string memory message;
         if (transferAmount > 0) {
             //payable(msg.sender).transfer(transferAmount);
             (bool callSuccess, ) = payable(msg.sender).call{value: transferAmount}("");
@@ -261,8 +218,6 @@ contract EagleTicket {
             _ticketStatus = TICKET_CONFIRMED;
             _paymentStatus = PAYMENT_COLLECTED;
             success = true;
-            message = string.concat("INFO: Ticket Purchased. Ticket # ", EagleLib.uintToString(_ticketNumber));
-            emit TicketReserved(_ticketInfo.flightNumber, _ticketNumber, transferAmount, message);
         }    
         //
         _ticketInfo.collectedAmount = ticketPrice;
@@ -270,31 +225,21 @@ contract EagleTicket {
         _ticketStatusTimeStamp = block.timestamp;
         _paymentStatus = PAYMENT_COLLECTED;
         _paymentStatusTimeStamp = block.timestamp;
-        emit TicketUpdate(_ticketNumber, "! Ticket Payment Confirmed !");
+        emit TicketConfirmed(_ticketInfo.flightNumber, _ticketNumber, transferAmount, ticketPrice, "! Ticket Payment Confirmed !");
     }
 
     /*
     * SELECT SEAT - Allows buyers to select/change seats
     */
-    function selectSeat (string memory seatNumber) OnlyBuyer public returns (bool success) {
+    function selectSeat (string memory seatNumber) external OnlyBuyer returns (bool success) {
         success = _eagleAirline.selectSeat(_ticketContract, seatNumber);
         if(success)
             _ticketInfo.seatNumber = seatNumber; 
     }
     
-    function _getPercentRefund(uint delayTime, bool isDelayClaim) private pure returns (uint8) {
-        if (delayTime >= 24 hours)
-            return (isDelayClaim) ? 100 : 100;
-        else if (delayTime >= 10 hours && delayTime < 24 hours)
-            return (isDelayClaim) ? 40 : 80;
-        else if (delayTime >= 2 hours && delayTime < 10 hours)
-            return (isDelayClaim) ? 10 : 40;
-        else
-            return 0;
-    }
-
+    
     // !! PAYABLE !!
-    function cancelTicket () OnlyBuyer public payable returns (bool success, string memory message) {
+    function cancelTicket () external payable OnlyBuyer returns (bool success, string memory message) {
         /*
         * Cancellation by Customer rules
         * Rule: Based on DIFFERENCE of (Scheduled Departure Datetime – Cancellation Datetime)
@@ -323,48 +268,39 @@ contract EagleTicket {
                 flightStatus >= FLIGHT_SCHEDULED && flightStatus <= FLIGHT_DELAYED,
                 "ERR: Ticket cannot be cancelled. Check Flight status"
             );
-            uint secondDiff = (_ticketInfo.schDepartureTimeStamp > currTime) ? _ticketInfo.schDepartureTimeStamp - currTime : 0;
-            // If < 2 hour	NOT ALLOWED (revert transaction)
-            require(secondDiff >= 2 hours, "ERR: Ticket cancellation window closed");
+            uint timeBasisSeconds = (_ticketInfo.schDepartureTimeStamp > currTime) ? _ticketInfo.schDepartureTimeStamp - currTime : 0;
+            // Calculate refund
+            uint8 percentRefund = _getPercentRefund(timeBasisSeconds, flightStatus, true);
+            require(percentRefund > 0, "ERR: Ticket cancellation window closed");
             _ticketStatus = TICKET_CANCELLATION_IN_PROGRESS;
             _ticketStatusTimeStamp = currTime;
-            // Calculate refund
-            uint8 percentRefund = _getPercentRefund(secondDiff, false);
-            require(percentRefund > 0, "ERR: Ticket cancellation window closed. Try claiming a refund.");
             //
             uint256 refundAmount;
-            uint256 penaltyAmount;
+            uint256 payAmount;
             // Transfer funds
             bool refundCallSuccess;
-            bool penaltyCallSuccess;
-            if (address(this).balance > _ticketInfo.collectedAmount) {     
-                refundAmount = _ticketInfo.collectedAmount * (percentRefund / 100);
-                penaltyAmount = _ticketInfo.collectedAmount - refundAmount; // balance
-                // Refund the Buyer
+            bool payCallSuccess;
+            // Balance has to be >= the collected payment
+            uint balanceAmount = address(this).balance;
+            if (balanceAmount >= _ticketInfo.collectedAmount) {     
+                refundAmount = balanceAmount * (percentRefund / 100.00);
+                payAmount = balanceAmount - refundAmount; // balance
+                // Refund the Buyer first
                 if (refundAmount > 0) {
                     (refundCallSuccess, ) = payable(_buyerAddress).call{value: refundAmount}("");
                     require(refundCallSuccess, "ERR: Ticket cancellation failed. Contact customer support.");
                 }
-                // Send balance to Airline
-                if (penaltyAmount > 0) {
-                    (penaltyCallSuccess, ) = payable(_operatorAddress).call{value: penaltyAmount}("");
-                    require(penaltyCallSuccess, "ERR: Ticket cancellation failed. Contact customer support.");
+                // Send the remaining balance to Airline
+                if (payAmount > 0) {
+                    (payCallSuccess, ) = payable(_operatorAddress).call{value: payAmount}("");
+                    require(payCallSuccess, "ERR: Ticket cancellation failed. Contact customer support.");
                 }
             } else {
                 message = "ERR: Insufficient funds. Contact customer support.";
                 revert (message);
             }
-            require(refundCallSuccess || penaltyCallSuccess, "ERR: Ticket cancellation failed. Contact customer support.");
-            _paymentStatusTimeStamp = currTime;
-            if (refundAmount > 0 && penaltyAmount > 0) {
-                _paymentStatus = PAYMENT_SPLIT;
-            } else if (refundAmount > 0 && penaltyAmount == 0) {
-                _paymentStatus = PAYMENT_REFUNDED;
-            } else if (refundAmount == 0 && penaltyAmount > 0) {
-                _paymentStatus = PAYMENT_PAID;
-            }
-            _ticketInfo.refundAmount = refundAmount;
-            _ticketInfo.paidAmount = penaltyAmount;
+            require(refundCallSuccess || payCallSuccess, "ERR: Ticket cancellation failed. Contact customer support.");
+            _settlePayment(refundAmount, payAmount);
         }
         //
         _ticketStatus = TICKET_CANCELLED;
@@ -379,42 +315,50 @@ contract EagleTicket {
     }
 
     // !! PAYABLE !!
-    function closeTicket (uint8 flightStatus) OnlyAirlineContract public payable returns (bool success) {
+    function closeTicket (uint8 flightStatus, uint schDepartTS, uint actDepartTS, uint preflightStsTS) external payable OnlyAirlineContract returns (bool success) {
         // Check ticket status
-        string memory message;
         uint currTime = block.timestamp;
         require(_ticketStatus >= TICKET_RESERVED && _ticketStatus <= TICKET_CONFIRMED, "ERR: Cannot close due to Ticket status (VOID/CLOSED/CANCELLED)");
         require(flightStatus == FLIGHT_LANDED || flightStatus == FLIGHT_CANCELLED, "ERR: Invalid Flight status");
         if (_ticketStatus == TICKET_RESERVED) {
             _ticketStatus = TICKET_VOID;
             _ticketStatusTimeStamp = currTime;
-            emit TicketCancelled(_ticketNumber, message);
+            emit TicketClosed(_ticketNumber,  "VOID Ticket");
         }
         //
-        if (!_refundClaimed && _paymentStatus == PAYMENT_COLLECTED) {
+        uint balanceAmount = address(this).balance;
+        if (
+            (!_refundClaimed && _paymentStatus == PAYMENT_COLLECTED) 
+            || balanceAmount > 0
+        ) {
+            // Calculate Delay time if any
+            uint delaytime = _calculateDelaytime(flightStatus, schDepartTS, actDepartTS, preflightStsTS);
+            // Transfer funds
             uint256 refundAmount;
             uint256 payAmount;
-            // Transfer funds
             bool refundCallSuccess;
             bool payCallSuccess;
-            if (address(this).balance > _ticketInfo.collectedAmount) {  
-                refundAmount = (flightStatus == FLIGHT_CANCELLED) ? _ticketInfo.collectedAmount : 0;
-                payAmount = (flightStatus == FLIGHT_LANDED) ? _ticketInfo.collectedAmount : 0;
+            // Balance has to be >= the collected payment
+            if (balanceAmount > _ticketInfo.collectedAmount) {  
+                uint8 percentRefund = _getPercentRefund(delaytime, flightStatus, false);
+                refundAmount = balanceAmount * (percentRefund/100.00);
+                payAmount = balanceAmount - refundAmount;
+                //refundAmount = (flightStatus == FLIGHT_CANCELLED) ? _ticketInfo.collectedAmount : 0;
+                //payAmount = (flightStatus == FLIGHT_LANDED) ? _ticketInfo.collectedAmount : 0;
                 // Refund the Buyer
                 if (refundAmount > 0) {
                     (refundCallSuccess, ) = payable(_buyerAddress).call{value: refundAmount}("");
-                    require(refundCallSuccess, "ERR: Ticket cancellation failed. Contact customer support.");
+                    require(refundCallSuccess, "ERR: Refund failed");
                 }
                 // Send balance to Airline
                 if (payAmount > 0) {
                     (payCallSuccess, ) = payable(_operatorAddress).call{value: payAmount}("");
-                    require(payCallSuccess, "ERR: Ticket cancellation failed. Contact customer support.");
+                    require(payCallSuccess, "ERR: Payment failed");
                 }
             } else {
-                message = "ERR: Insufficient funds. Contact customer support.";
-                revert (message);
+                revert ("ERR: Insufficient funds to close ticket");
             }
-            require(refundCallSuccess || payCallSuccess, "ERR: Ticket cancellation failed. Contact customer support.");
+            require(refundCallSuccess || payCallSuccess, "ERR: Close Ticket failed");
             // Update payment info
             _paymentStatusTimeStamp = currTime;
             if (refundAmount > 0 && payAmount > 0)
@@ -431,102 +375,180 @@ contract EagleTicket {
         _ticketStatusTimeStamp = currTime;
         _ticketInfo.seatNumber = "NA";
         success = true;
-        message = string.concat("INFO: Ticket Cancelled. Ticket # ", EagleLib.uintToString(_ticketNumber));
-        emit TicketCancelled (_ticketNumber, message);
+        emit TicketClosed (_ticketNumber, "INFO: Ticket Closed");
     }
 
     // !! PAYABLE !!
-    function claimRefund () OnlyBuyer public payable returns (bool success, string memory message) {
+    function claimRefund () external payable OnlyBuyer returns (bool success) {
         /*
         * Delayed by Airline – Penalty Rules
         * Rule: 
         * If Ticket Status != CLOSED/CANCELLED
         * Customer can claim a refund only once
         * Determine Delay Time
-        *   If Flight Status < CANCELLED
-        *       Delay Time = 24 Hours i.e. 100% refund
-        *   If Flight Status < IN_AIR 
-        *       && (Current Time - Scheduled Departure Datetime) >= 24 hours
-        *       && (Current Time - NEW Departure Datetime) >= 24 hours
-        *       then Delay Time = (Current Time - Scheduled Departure Datetime) - 24 hours
-        *       (If Actual Departure Datetime is not updated within 24 hours from Scheduled Departure Datetime	100%
-        *   OR if Flight Status = LANDED && (Actual Arrival Datetime - Scheduled Arrival Datetime) > 0
-        *       then Delay Time = (Actual Arrival Datetime - Scheduled Arrival Datetime)
-        * Based on Delay Time
-        *   If >= 2 hours and < 10 hours	10%
-        *   If >= 10 hours and < 24 hours	40%
-        *   If >= 24 hours	100%
+        *  If Flight Status = CANCELLED
+        *       Percent Refund = 100% refund
+        *  Else If Flight Status < CANCELLED
+        *       AND the Status was not updated by the Airline within the time window = (From: Scheduled Departure - 24 hours) to (To: Scheduled Departure) 
+        *           Percent Refund = 100% refund
+        *       (If Actual Departure Datetime is not updated within 24 hours from Scheduled Departure Datetime	100%)
+        *  Else calculate actual Delay time:
+        *       If flight STATUS = LANDED/IN-AIR
+        *            Delay time = (Actual Departure - Scehduled Departure)
+        *       Else
+        *           Delay time = (Current Time - Scehduled Departure) 
+        *       Percent Refund, Based on Delay Time
+        *           If >= 2 hours and < 10 hours	10%
+        *           If >= 10 hours and < 24 hours	40%
+        *           If >= 24 hours	100%
         */
-        require(_refundClaimed, "ERR: Refund claim already processed");
+        require(!_refundClaimed, "ERR: Refund claim already processed");
         // Check ticket status
-        if (_ticketStatus <= TICKET_CLOSED) 
-            revert ("ERR: Ticket not elligible");
+        if (_ticketStatus <= TICKET_CANCELLED) 
+            revert ("ERR: Ticket already Cancelled");
         else if (_ticketStatus == TICKET_CANCELLATION_IN_PROGRESS)
             revert ("ERR: Ticket CANCELLATION is in progress");
         //
         require(_paymentStatus == PAYMENT_COLLECTED, "ERR: Refund not applicable"); // payment was never collected or has already be refunded/paid
-        //
-        (uint8 flightStatus, uint schDeparturetTS, , uint newDeparturetTS, uint newArrivalTS) = _eagleAirline.getflightStsTime(_ticketInfo.flightNumber);
-        uint256 refundAmount = 0; 
-        uint256 penaltyAmount = 0;
         uint currTime = block.timestamp;
-        uint delayTime = 0;
-        // Caculate Penalty
-        if (flightStatus == FLIGHT_CANCELLED) {
-            delayTime = 24 hours;
-        } else if (
-            flightStatus < FLIGHT_IN_AIR 
-            && (currTime - schDeparturetTS) > 24 hours
-            && (currTime - newDeparturetTS) > 24 hours
-        ) {
-            delayTime = (currTime - schDeparturetTS) - 24 hours;
-        } else if (flightStatus == FLIGHT_LANDED) {
-            delayTime = newArrivalTS - schDeparturetTS;
-        }
-        // Calculate Refund percent on Delay Time
-        uint8 percentRefund = _getPercentRefund(delayTime, true);
+        (uint8 flightStatus, uint schDeparturetTS,, uint newDeparturetTS,, uint preflightStsTS) = _eagleAirline.getflightStsTime(_ticketInfo.flightNumber);
+        require (currTime - schDeparturetTS >= 24 hours, "ERR: Ticket not elligible for claim");
+        //
+        // Calculate Refund percent based on Delay Time
+        uint timeBasisSeconds = _calculateDelaytime(flightStatus, schDeparturetTS, newDeparturetTS, preflightStsTS);
+        uint8 percentRefund = _getPercentRefund(timeBasisSeconds, flightStatus, false);
         require(percentRefund > 0, "ERR: Claim is not valid");
         // Calculate amount based on percent and if any refunds were previously paid
-        refundAmount = _ticketInfo.collectedAmount * (percentRefund / 100);
-        penaltyAmount = _ticketInfo.collectedAmount - refundAmount; // balance
+        uint256 refundAmount = _ticketInfo.collectedAmount * (percentRefund / 100);
+        uint256 payAmount = _ticketInfo.collectedAmount - refundAmount; // balance
         bool refundCallSuccess; bool payCallSuccess;
+        // Balance has to be >= the collected payment
+        uint balanceAmount = address(this).balance;
         //if (ARMSToken(_tokenARMS).balanceOf(address(this)) > _ticketInfo.collectedAmount) {  
-        if (address(this).balance > _ticketInfo.collectedAmount) {     
+        if (balanceAmount > _ticketInfo.collectedAmount) {   
+            refundAmount = _ticketInfo.collectedAmount * (percentRefund / 100); 
+            payAmount = _ticketInfo.collectedAmount - refundAmount; // balance 
             // Refund the Buyer
             if (refundAmount > 0) {
                 //refundCallSuccess = ARMSToken(_tokenARMS).transfer(payable(_buyerAddress), refundAmount);
                 (refundCallSuccess, ) = payable(_buyerAddress).call{value: refundAmount}("");
-                require(refundCallSuccess, "ERR: Refund claim failed. Contact customer support.");
+                require(refundCallSuccess, "ERR: Refund call failed. Contact customer support.");
             }
             // Send balance to Airline
-            if (penaltyAmount > 0) {
+            if (payAmount > 0) {
                 //payCallSuccess = ARMSToken(_tokenARMS).transfer(payable(_operatorAddress), penaltyAmount);
-                (payCallSuccess, ) = payable(_operatorAddress).call{value: penaltyAmount}("");
-                require(payCallSuccess, "ERR: Refund claim failed. Contact customer support.");
+                (payCallSuccess, ) = payable(_operatorAddress).call{value: payAmount}("");
+                require(payCallSuccess, "ERR: Payment failed. Contact customer support.");
             }
         } else {
-            message = "ERR: Insufficient funds. Contact customer support.";
-            revert (message);
+            revert ("ERR: Insufficient funds to settle claim. Contact customer support.");
         }
         require(refundCallSuccess || payCallSuccess, "ERR: Refund claim failed. Contact customer support.");
         // Update payment info
         _refundClaimed = true;
         _paymentStatusTimeStamp = currTime;
-        if (refundAmount > 0 && penaltyAmount > 0)
+        if (refundAmount > 0 && payAmount > 0)
             _paymentStatus = PAYMENT_SPLIT;
-        else if (refundAmount > 0 && penaltyAmount == 0)
+        else if (refundAmount > 0 && payAmount == 0)
             _paymentStatus = PAYMENT_REFUNDED;
-        else if (refundAmount == 0 && penaltyAmount > 0)
+        else if (refundAmount == 0 && payAmount > 0)
             _paymentStatus = PAYMENT_PAID;
         //
         _ticketInfo.refundAmount = refundAmount;
-        _ticketInfo.paidAmount = penaltyAmount;
+        _ticketInfo.paidAmount = payAmount;
         //
-        //_ticketStatus = TICKET_CANCELLED;
+        _ticketStatus = TICKET_CLOSED;
         _ticketStatusTimeStamp = block.timestamp;
         _paymentStatusTimeStamp = _ticketStatusTimeStamp;
         success = true;
-        message = string.concat("INFO: Ticket Refund Claimed. Ticket # ", EagleLib.uintToString(_ticketNumber));
-        //emit TicketRefundClaimed(_ticketNumber, message);
+        emit TicketRefundClaimed(_ticketNumber, "INFO: Ticket Refund Claimed");
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    // private functions
+    function _getTicketStatusText (uint status) private pure returns (string memory) {
+        if (status == TICKET_RESERVED) {
+            return "RESERVED";
+        } else if (status == TICKET_CONFIRMED) {
+            return "CONFIRMED";
+        } else if (status == TICKET_CANCELLATION_IN_PROGRESS) {
+            return "CANCELLATION-IN-PROGRESS";
+        } else if (status == TICKET_CANCELLED) {
+            return "CANCELLED";
+        } else {
+            return "UNKNOWN";
+        }
+    }
+
+    // Helper function to get ticket status text
+    function _getPaymentStatusText (uint status) private pure returns (string memory) {
+        if (status == PAYMENT_PENDING) {
+            return "PENDING";
+        } else if (status == PAYMENT_COLLECTED) {
+            return "COLLECTED";
+        } else if (status == PAYMENT_REFUNDED) {
+            return "REFUNDED";
+        } else if (status == PAYMENT_SPLIT) {
+            return "SPLIT";
+        } else if (status == PAYMENT_PAID) {
+            return "PAID";
+        } else {
+            return "UNKNOWN";
+        }
+    }   
+
+    function _calculateDelaytime(uint8 flightStatus, uint schDeparturetTS, uint actDepartureTS, uint preflightStsTS) private view returns (uint) {
+         if (flightStatus == FLIGHT_CANCELLED) {
+            return 24 hours; // Note: Flight cancellation should have already cancelled the ticket and refunded 100%
+            //percentRefund = 100; // 100 %
+        } else if (flightStatus < FLIGHT_CANCELLED  
+            && schDeparturetTS - preflightStsTS > 24 hours
+        ) {
+            // Check if the Airline delayed to update status within 24 hours of the schedueld departure time 
+           return 24 hours;
+           //percentRefund = 100; // 100 %
+        }
+         else if (
+            flightStatus <  FLIGHT_CANCELLED
+        ) {
+            // Check if the flight is/was actually delayed
+            // If light has landed, newDeparturetTS = actual departure datetime
+            //  else use currTime
+            return (((flightStatus ==  FLIGHT_LANDED || flightStatus ==  FLIGHT_IN_AIR)? actDepartureTS : block.timestamp) - schDeparturetTS);
+            //percentRefund = _getPercentRefund(delayTime, true);
+        }
+        return 0;
+    }
+
+    function _getPercentRefund(uint timeBasisSeconds, uint8 flightStatus, bool isTicketCancellation) private pure returns (uint8) {
+        console.log("timeBasisSeconds = ", timeBasisSeconds);
+        console.log("flightStatus = ", flightStatus);
+        console.log("isTicketCancellation = ", isTicketCancellation);
+        if (flightStatus == FLIGHT_CANCELLED)
+            return 100;
+        //
+        if (timeBasisSeconds >= 24 hours)
+            return (isTicketCancellation) ? 100 : 100;
+        else if (timeBasisSeconds >= 10 hours && timeBasisSeconds < 24 hours)
+            return (isTicketCancellation) ? 80 : 40;
+        else if (timeBasisSeconds >= 2 hours && timeBasisSeconds < 10 hours)
+            return (isTicketCancellation) ? 40 : 10;
+        else
+            return 0;
+    }
+
+    function _settlePayment(uint refundedAmount, uint paidAmount) private returns (bool) {
+        _paymentStatusTimeStamp = block.timestamp;
+        if (refundedAmount > 0 && paidAmount > 0) {
+            _paymentStatus = PAYMENT_SPLIT;
+        } else if (refundedAmount > 0 && paidAmount == 0) {
+            _paymentStatus = PAYMENT_REFUNDED;
+        } else if (refundedAmount == 0 && paidAmount > 0) {
+            _paymentStatus = PAYMENT_PAID;
+        }
+        _ticketInfo.refundAmount = refundedAmount;
+        _ticketInfo.paidAmount = paidAmount;
+        return true;
     }
 }
