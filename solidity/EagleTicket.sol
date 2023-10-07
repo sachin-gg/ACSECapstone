@@ -40,7 +40,7 @@ contract EagleTicket {
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // DATA MEMBERS
     // FlightStatus - enumerates various flight states
-    uint private constant _TIME_UNITS = 1 minutes; // 1 hours; i.e. (60 * 60) seconds // FOR TESTING use 1 minutes i.e. (60) seconds
+    uint public constant TIME_UNITS = 1 minutes; // 1 hours; i.e. (60 * 60) seconds // FOR TESTING use 1 minutes i.e. (60) seconds
     uint8 private constant FLIGHT_SCHEDULED = 0;
     uint8 private constant FLIGHT_ON_TIME = 1;
     uint8 private constant FLIGHT_DELAYED = 2;
@@ -199,7 +199,7 @@ contract EagleTicket {
 
     // !! PAYABLE !!
     /*
-    * COMPLETE PURCHASE - Allows buyers to pay & complete payment for the ticket
+    * confirmTicket - Allows buyers to pay & complete payment for the ticket
     */
     function confirmTicket () external payable OnlyBuyer returns (bool success) {
         success = false;
@@ -239,8 +239,10 @@ contract EagleTicket {
     }
     
     
-    // !! PAYABLE !!
-    function cancelTicket () external payable OnlyBuyer returns (bool success, string memory message) {
+    /*
+    * cancelTicket - Allows customers to cancel/void a ticket
+    */
+    function cancelTicket () external OnlyBuyer returns (bool success, string memory message) {
         /*
         * Cancellation by Customer rules
         * Rule: Based on DIFFERENCE of (Scheduled Departure Datetime – Cancellation Datetime)
@@ -264,7 +266,7 @@ contract EagleTicket {
             revert ("Err: Ticket already CANCELLED");
         }
         if (!_refundClaimed) {
-            uint8 flightStatus = _eagleAirline.getflightSts(_ticketInfo.flightNumber);
+            uint8 flightStatus = _eagleAirline.getflightStatus(_ticketInfo.flightNumber);
             require(
                 flightStatus >= FLIGHT_SCHEDULED && flightStatus <= FLIGHT_DELAYED,
                 "ERR: Ticket cannot be cancelled. Check Flight status"
@@ -315,8 +317,10 @@ contract EagleTicket {
         emit TicketCancelled (_ticketNumber, message);
     }
 
-    // !! PAYABLE !!
-    function closeTicket (uint8 flightStatus, uint schDepartTS, uint actDepartTS, uint preflightStsTS) external payable OnlyAirlineContract returns (bool success) {
+    /*
+    * closeTicket - allows the airliine contract to close a ticket and settle the costs
+    */
+    function closeTicket (uint8 flightStatus, uint schDepartTS, uint actDepartTS, uint preflightStsTS) external OnlyAirlineContract returns (bool success) {
         // Check ticket status
         uint currTime = block.timestamp;
         require(_ticketStatus >= TICKET_RESERVED && _ticketStatus <= TICKET_CONFIRMED, "ERR: Cannot close due to Ticket status (VOID/CLOSED/CANCELLED)");
@@ -379,30 +383,30 @@ contract EagleTicket {
         emit TicketClosed (_ticketNumber, "INFO: Ticket Closed");
     }
 
-    // !! PAYABLE !!
-    function claimRefund () external payable OnlyBuyer returns (bool success) {
-        /*
-        * Delayed by Airline – Penalty Rules
-        * Rule: 
-        * If Ticket Status != CLOSED/CANCELLED
-        * Customer can claim a refund only once
-        * Determine Delay Time
-        *  If Flight Status = CANCELLED
-        *       Percent Refund = 100% refund
-        *  Else If Flight Status < CANCELLED
-        *       AND the Status was not updated by the Airline within the time window = (From: Scheduled Departure - 24 hours) to (To: Scheduled Departure) 
-        *           Percent Refund = 100% refund
-        *       (If Actual Departure Datetime is not updated within 24 hours from Scheduled Departure Datetime	100%)
-        *  Else calculate actual Delay time:
-        *       If flight STATUS = LANDED/IN-AIR
-        *            Delay time = (Actual Departure - Scehduled Departure)
-        *       Else
-        *           Delay time = (Current Time - Scehduled Departure) 
-        *       Percent Refund, Based on Delay Time
-        *           If >= 2 hours and < 10 hours	10%
-        *           If >= 10 hours and < 24 hours	40%
-        *           If >= 24 hours	100%
-        */
+    /*
+    * claimRefund
+    * Delayed by Airline – Penalty Rules
+    * Rule: 
+    * If Ticket Status != CLOSED/CANCELLED
+    * Customer can claim a refund only once
+    * Determine Delay Time
+    *  If Flight Status = CANCELLED
+    *       Percent Refund = 100% refund
+    *  Else If Flight Status < CANCELLED
+    *       AND the Status was not updated by the Airline within the time window = (From: Scheduled Departure - 24 hours) to (To: Scheduled Departure) 
+    *           Percent Refund = 100% refund
+    *       (If Actual Departure Datetime is not updated within 24 hours from Scheduled Departure Datetime	100%)
+    *  Else calculate actual Delay time:
+    *       If flight STATUS = LANDED/IN-AIR
+    *            Delay time = (Actual Departure - Scehduled Departure)
+    *       Else
+    *           Delay time = (Current Time - Scehduled Departure) 
+    *       Percent Refund, Based on Delay Time
+    *           If >= 2 hours and < 10 hours	10%
+    *           If >= 10 hours and < 24 hours	40%
+    *           If >= 24 hours	100%
+    */
+    function claimRefund () external OnlyBuyer returns (bool success) {
         require(!_refundClaimed, "ERR: Refund claim already processed");
         // Check ticket status
         if (_ticketStatus <= TICKET_CANCELLED) 
@@ -412,8 +416,8 @@ contract EagleTicket {
         //
         require(_paymentStatus == PAYMENT_COLLECTED, "ERR: Refund not applicable"); // payment was never collected or has already be refunded/paid
         uint currTime = block.timestamp;
-        (uint8 flightStatus, uint schDeparturetTS,, uint newDeparturetTS,, uint preflightStsTS) = _eagleAirline.getflightStsTime(_ticketInfo.flightNumber);
-        require (currTime - schDeparturetTS >= (24 * _TIME_UNITS), "ERR: Ticket not elligible for claim");
+        (uint8 flightStatus, uint schDeparturetTS,, uint newDeparturetTS,, uint preflightStsTS) = _eagleAirline.getflightStatusTime(_ticketInfo.flightNumber);
+        require (currTime - schDeparturetTS >= (24 * TIME_UNITS), "ERR: Ticket not elligible for claim");
         //
         // Calculate Refund percent based on Delay Time
         uint timeBasisSeconds = _calculateDelaytime(flightStatus, schDeparturetTS, newDeparturetTS, preflightStsTS);
@@ -501,13 +505,13 @@ contract EagleTicket {
 
     function _calculateDelaytime(uint8 flightStatus, uint schDeparturetTS, uint actDepartureTS, uint preflightStsTS) private view returns (uint) {
          if (flightStatus == FLIGHT_CANCELLED) {
-            return (24 * _TIME_UNITS); // Note: Flight cancellation should have already cancelled the ticket and refunded 100%
+            return (24 * TIME_UNITS); // Note: Flight cancellation should have already cancelled the ticket and refunded 100%
             //percentRefund = 100; // 100 %
         } else if (flightStatus < FLIGHT_CANCELLED  
-            && schDeparturetTS - preflightStsTS > (24 * _TIME_UNITS)
+            && schDeparturetTS - preflightStsTS > (24 * TIME_UNITS)
         ) {
             // Check if the Airline delayed to update status within 24 hours of the schedueld departure time 
-           return (24 * _TIME_UNITS);
+           return (24 * TIME_UNITS);
            //percentRefund = 100; // 100 %
         }
          else if (
@@ -529,11 +533,11 @@ contract EagleTicket {
         if (flightStatus == FLIGHT_CANCELLED)
             return 100;
         //
-        if (timeBasisSeconds >= (24 * _TIME_UNITS)
+        if (timeBasisSeconds >= (24 * TIME_UNITS))
             return (isTicketCancellation) ? 100 : 100;
-        else if (timeBasisSeconds >= (10 * _TIME_UNITS) && timeBasisSeconds < (24 * _TIME_UNITS))
+        else if (timeBasisSeconds >= (10 * TIME_UNITS) && timeBasisSeconds < (24 * TIME_UNITS))
             return (isTicketCancellation) ? 80 : 40;
-        else if (timeBasisSeconds >= (2 * _TIME_UNITS) && timeBasisSeconds < (10 * _TIME_UNITS))
+        else if (timeBasisSeconds >= (2 * TIME_UNITS) && timeBasisSeconds < (10 * TIME_UNITS))
             return (isTicketCancellation) ? 40 : 10;
         else
             return 0;

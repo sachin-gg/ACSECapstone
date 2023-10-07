@@ -57,10 +57,10 @@ contract EagleAirline {
     // DATA MEMBERS
     /// Airline Type - enumerates various Airline types
     enum OpType { DOM, INT } // DOMESTIC, INTERNATIONAL
-    uint private constant _TIME_UNITS = 1 minutes; // 1 hours; i.e. (60 * 60) seconds // FOR TESTING use 1 minutes i.e. (60) seconds
+    uint public constant TIME_UNITS = 1 minutes; // 1 hours; i.e. (60 * 60) seconds // FOR TESTING use 1 minutes i.e. (60) seconds
     uint8 public constant MAX_SEATS = 100;
     uint public constant T_PRICE_DOM = 10 * 1e18; // * 10 ** 18; // ether;
-    uint public constant T_PRICE_INT = 25 * 1e18; // * 10 ** 18; //ether;
+    uint public constant T_PRICE_INT = 25 * 1e18; // * 10 ** 18; // ether;
     
     // flightSts - enumerates various flight states
     //enum flightSts { DOES_NOT_EXIST, SCHEDULED, ON_TIME, DELAYED, BOARDING, IN_AIR, CANCELLED, LANDED }
@@ -261,12 +261,12 @@ contract EagleAirline {
     }
 
     function flightOnTime(uint flightNum) onlyOperator(flightNum)  public returns (bool) {
-        return _updateflightSts(flightNum, "ON-TIME", FL_ONTIME, 0);
+        return _updateflightStatus(flightNum, "ON-TIME", FL_ONTIME, 0);
     }
 
     function flightDelayed(uint flightNum, uint estDelayMinutes) onlyOperator(flightNum)  public returns (bool) {
         require(estDelayMinutes > 0, "ERR: Inv delay time");
-        return _updateflightSts(flightNum, string.concat("DELAYED (min): ", EagleLib.uintToString (estDelayMinutes)), FL_DLYD, estDelayMinutes);
+        return _updateflightStatus(flightNum, string.concat("DELAYED (min): ", EagleLib.uintToString (estDelayMinutes)), FL_DLYD, estDelayMinutes);
     }
 
     function flightBoarding(uint flightNum) onlyOperator(flightNum) public returns (bool) {
@@ -277,7 +277,7 @@ contract EagleAirline {
             : flightMap[flightNum].delayMinutes
         );
         flightMap[flightNum].seatsAvl = false;
-        return _updateflightSts(flightNum, "BOARDING", FL_BRDG, calcDelayMinutes);
+        return _updateflightStatus(flightNum, "BOARDING", FL_BRDG, calcDelayMinutes);
     }
 
     function flightInAir(uint flightNum) onlyOperator(flightNum) public returns (bool) {
@@ -288,7 +288,7 @@ contract EagleAirline {
             : 0
         );
         flightMap[flightNum].actDepTS = currTime;
-        return _updateflightSts(flightNum, "IN-AIR", FL_AIR, calcDelayMinutes);
+        return _updateflightStatus(flightNum, "IN-AIR", FL_AIR, calcDelayMinutes);
     }
 
     function flightCancelled(uint flightNum) onlyOperator(flightNum) public returns (bool) {
@@ -300,7 +300,7 @@ contract EagleAirline {
         flightMap[flightNum].actDepTS = 0;
         flightMap[flightNum].actArrTS = 0;
         flightMap[flightNum].seatsAvl = false;
-        return _updateflightSts(flightNum, "CANCELLED", FL_CNCL, 0);
+        return _updateflightStatus(flightNum, "CANCELLED", FL_CNCL, 0);
     }
 
     function flightLanded(uint flightNum) onlyOperator(flightNum) public returns (bool) {
@@ -313,7 +313,7 @@ contract EagleAirline {
         );
         flightMap[flightNum].actArrTS = currTime;
         flightMap[flightNum].seatsAvl = false;
-        return _updateflightSts(flightNum, "LANDED", FL_LAND, calcDelayMinutes);
+        return _updateflightStatus(flightNum, "LANDED", FL_LAND, calcDelayMinutes);
     }
 
     /*
@@ -544,7 +544,7 @@ contract EagleAirline {
     /*
     * update flighht - Allows Airline operator to update Flight status 
     */
-    function _updateflightSts (uint flightNum, string memory stsTxt, uint8 flightSts, uint delayMinutes) private returns (bool success) {
+    function _updateflightStatus (uint flightNum, string memory stsTxt, uint8 flightSts, uint delayMinutes) private returns (bool success) {
         uint currTime = block.timestamp;
         FlightInfo storage flight = flightMap[flightNum];
         flight.flightSts = flightSts;
