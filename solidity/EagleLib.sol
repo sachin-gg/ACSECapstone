@@ -65,6 +65,9 @@ library EagleLib {
         uint8 dt_day;
     }
     */
+    //
+    uint public constant TIME_UNITS = 1 minutes; // 1 hours; i.e. (60 * 60) seconds // FOR TESTING use 1 minutes i.e. (60) seconds
+    //
     function stringLength(string memory s) public pure returns (uint256) {
         return bytes(s).length;
     }

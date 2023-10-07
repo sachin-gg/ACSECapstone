@@ -35,12 +35,9 @@ import "./EagleAirline.sol";
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // Eagle Airline contract - keeps track of the Arilines & flight details & ticket buyer (customer) details across multiple flights.
 contract EagleTicket {
-    //
-    //EagleLib private EagleLib;
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // DATA MEMBERS
     // FlightStatus - enumerates various flight states
-    uint public constant TIME_UNITS = 1 minutes; // 1 hours; i.e. (60 * 60) seconds // FOR TESTING use 1 minutes i.e. (60) seconds
     uint8 private constant FLIGHT_SCHEDULED = 0;
     uint8 private constant FLIGHT_ON_TIME = 1;
     uint8 private constant FLIGHT_DELAYED = 2;
@@ -92,8 +89,6 @@ contract EagleTicket {
     }
     TicketInfo private _ticketInfo;
     //
-
-
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // CONSTRUCTOR
     constructor (
@@ -136,21 +131,21 @@ contract EagleTicket {
             schDepartureTimeStamp: schDepartureTimeStamp
         });
         //
-        emit ContractCreated("Ticket Contract", address(this));
+        emit TicketCreated("Ticket Contract", address(this));
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // EVENTS
-    event ContractCreated(string contractName, address indexed contractAddress);
+    event TicketCreated(string ticketContractName, address indexed ticketContractAddress);
     //event TicketReserved (uint flightNumber, uint ticketNumber, uint transferredAmount, string message);
     event TicketConfirmed(uint flightNumber, uint ticketNumber, uint transferredAmount, uint collectedAmount, string message);
-    event TicketCancelled(uint ticketNumber, string message);
-    event TicketClosed(uint ticketNumber, string message);
-    event TicketRefundClaimed(uint ticketNumber, string message);
-    event ViewTicket(uint ticketNumber, uint flightNumber, string seatNumber, string ticketStatus, string paymentStatus, uint collectedAmount);
+    event TicketCancelled(uint ticketNumber, uint refundAmount, uint paidAmount, uint collectedAmount, string message);
+    event TicketClosed(uint ticketNumber, uint refundAmount, uint paidAmount, uint collectedAmount, string message);
+    event TicketRefundClaimed(uint ticketNumber, uint refundAmount, uint paidAmount, uint collectedAmount, string message);
+    event ViewTicket(uint ticketNumber, uint flightNumber, uint schDepartureTS, string seatNumber, string ticketStatus, string paymentStatus, uint refundAmount, uint paidAmount, uint collectedAmount);
     //event TicketCancelled (address indexed airline, address indexed customer, uint flightNumber, uint ticketNumber, string message);
-    event ErrorMessage(string errorMessage);
-    event InfoMessage(string infoMessage);
+    //event ErrorMessage(string errorMessage);
+    //event InfoMessage(string infoMessage);
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // MODIFIERS
     modifier OnlyAirlineContract() {
@@ -190,9 +185,12 @@ contract EagleTicket {
         emit ViewTicket (
             _ticketNumber,
             _ticketInfo.flightNumber, 
+            _ticketInfo.schDepartureTimeStamp,
             _ticketInfo.seatNumber, 
             ticketStatus,
             paymentStatus,
+            _ticketInfo.refundAmount,
+            _ticketInfo.paidAmount,
             _ticketInfo.collectedAmount
         );
     }
@@ -258,7 +256,7 @@ contract EagleTicket {
             (success, message) = _eagleAirline.voidTicket(_ticketContract);
             _ticketStatus = TICKET_VOID;
             _ticketStatusTimeStamp = currTime;
-            emit TicketCancelled(_ticketNumber, message);
+            emit TicketCancelled(_ticketNumber, _ticketInfo.refundAmount, _ticketInfo.paidAmount, _ticketInfo.collectedAmount, message);
             //selfdestruct(_buyerAddress);
         } else if (_ticketStatus == TICKET_CANCELLATION_IN_PROGRESS) {
             revert ("Err: Prev CANCELLATION IN PROGRESS");
@@ -271,6 +269,8 @@ contract EagleTicket {
                 flightStatus >= FLIGHT_SCHEDULED && flightStatus <= FLIGHT_DELAYED,
                 "ERR: Ticket cannot be cancelled. Check Flight status"
             );
+            console.log("_ticketInfo.schDepartureTimeStamp = ", _ticketInfo.schDepartureTimeStamp);
+            console.log("currTime = ", currTime);
             uint timeBasisSeconds = (_ticketInfo.schDepartureTimeStamp > currTime) ? _ticketInfo.schDepartureTimeStamp - currTime : 0;
             // Calculate refund
             uint8 percentRefund = _getPercentRefund(timeBasisSeconds, flightStatus, true);
@@ -314,7 +314,7 @@ contract EagleTicket {
         require(success, message); 
         success = true;
         message = string.concat("INFO: Ticket Cancelled. Ticket # ", EagleLib.uintToString(_ticketNumber));
-        emit TicketCancelled (_ticketNumber, message);
+        emit TicketCancelled (_ticketNumber, _ticketInfo.refundAmount, _ticketInfo.paidAmount, _ticketInfo.collectedAmount, message);
     }
 
     /*
@@ -328,7 +328,7 @@ contract EagleTicket {
         if (_ticketStatus == TICKET_RESERVED) {
             _ticketStatus = TICKET_VOID;
             _ticketStatusTimeStamp = currTime;
-            emit TicketClosed(_ticketNumber,  "VOID Ticket");
+            emit TicketClosed(_ticketNumber, _ticketInfo.refundAmount, _ticketInfo.paidAmount, _ticketInfo.collectedAmount,  "VOID Ticket");
         }
         //
         uint balanceAmount = address(this).balance;
@@ -380,7 +380,7 @@ contract EagleTicket {
         _ticketStatusTimeStamp = currTime;
         _ticketInfo.seatNumber = "NA";
         success = true;
-        emit TicketClosed (_ticketNumber, "INFO: Ticket Closed");
+        emit TicketClosed (_ticketNumber, _ticketInfo.refundAmount, _ticketInfo.paidAmount, _ticketInfo.collectedAmount, "INFO: Ticket Closed");
     }
 
     /*
@@ -417,7 +417,7 @@ contract EagleTicket {
         require(_paymentStatus == PAYMENT_COLLECTED, "ERR: Refund not applicable"); // payment was never collected or has already be refunded/paid
         uint currTime = block.timestamp;
         (uint8 flightStatus, uint schDeparturetTS,, uint newDeparturetTS,, uint preflightStsTS) = _eagleAirline.getflightStatusTime(_ticketInfo.flightNumber);
-        require (currTime - schDeparturetTS >= (24 * TIME_UNITS), "ERR: Ticket not elligible for claim");
+        require (currTime - schDeparturetTS >= (24 * EagleLib.TIME_UNITS), "ERR: Ticket not elligible for claim");
         //
         // Calculate Refund percent based on Delay Time
         uint timeBasisSeconds = _calculateDelaytime(flightStatus, schDeparturetTS, newDeparturetTS, preflightStsTS);
@@ -466,7 +466,7 @@ contract EagleTicket {
         _ticketStatusTimeStamp = block.timestamp;
         _paymentStatusTimeStamp = _ticketStatusTimeStamp;
         success = true;
-        emit TicketRefundClaimed(_ticketNumber, "INFO: Ticket Refund Claimed");
+        emit TicketRefundClaimed(_ticketNumber, _ticketInfo.refundAmount, _ticketInfo.paidAmount, _ticketInfo.collectedAmount, "INFO: Ticket Refund Claimed");
     }
 
 
@@ -505,13 +505,13 @@ contract EagleTicket {
 
     function _calculateDelaytime(uint8 flightStatus, uint schDeparturetTS, uint actDepartureTS, uint preflightStsTS) private view returns (uint) {
          if (flightStatus == FLIGHT_CANCELLED) {
-            return (24 * TIME_UNITS); // Note: Flight cancellation should have already cancelled the ticket and refunded 100%
+            return (24 * EagleLib.TIME_UNITS); // Note: Flight cancellation should have already cancelled the ticket and refunded 100%
             //percentRefund = 100; // 100 %
         } else if (flightStatus < FLIGHT_CANCELLED  
-            && schDeparturetTS - preflightStsTS > (24 * TIME_UNITS)
+            && schDeparturetTS - preflightStsTS > (24 * EagleLib.TIME_UNITS)
         ) {
             // Check if the Airline delayed to update status within 24 hours of the schedueld departure time 
-           return (24 * TIME_UNITS);
+           return (24 * EagleLib.TIME_UNITS);
            //percentRefund = 100; // 100 %
         }
          else if (
@@ -533,11 +533,11 @@ contract EagleTicket {
         if (flightStatus == FLIGHT_CANCELLED)
             return 100;
         //
-        if (timeBasisSeconds >= (24 * TIME_UNITS))
+        if (timeBasisSeconds >= (24 * EagleLib.TIME_UNITS))
             return (isTicketCancellation) ? 100 : 100;
-        else if (timeBasisSeconds >= (10 * TIME_UNITS) && timeBasisSeconds < (24 * TIME_UNITS))
+        else if (timeBasisSeconds >= (10 * EagleLib.TIME_UNITS) && timeBasisSeconds < (24 * EagleLib.TIME_UNITS))
             return (isTicketCancellation) ? 80 : 40;
-        else if (timeBasisSeconds >= (2 * TIME_UNITS) && timeBasisSeconds < (10 * TIME_UNITS))
+        else if (timeBasisSeconds >= (2 * EagleLib.TIME_UNITS) && timeBasisSeconds < (10 * EagleLib.TIME_UNITS))
             return (isTicketCancellation) ? 40 : 10;
         else
             return 0;

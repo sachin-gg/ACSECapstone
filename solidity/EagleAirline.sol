@@ -52,15 +52,13 @@ contract EagleFactory {
 
 // Eagle Airline contract - keeps track of the Arilines & flight details & ticket buyer (customer) details across multiple flights.
 contract EagleAirline {
-    //EagleLib private EagleLib;
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // DATA MEMBERS
     /// Airline Type - enumerates various Airline types
     enum OpType { DOM, INT } // DOMESTIC, INTERNATIONAL
-    uint public constant TIME_UNITS = 1 minutes; // 1 hours; i.e. (60 * 60) seconds // FOR TESTING use 1 minutes i.e. (60) seconds
     uint8 public constant MAX_SEATS = 100;
-    uint public constant T_PRICE_DOM = 10 * 1e18; // * 10 ** 18; // ether;
-    uint public constant T_PRICE_INT = 25 * 1e18; // * 10 ** 18; // ether;
+    uint public constant T_PRICE_DOM = 10 * 1e18; // * 10 ** 18; // ether; DOMESTIC Ticket cost
+    uint public constant T_PRICE_INT = 25 * 1e18; // * 10 ** 18; // ether; INTERNATIONAL Ticket cost
     
     // flightSts - enumerates various flight states
     //enum flightSts { DOES_NOT_EXIST, SCHEDULED, ON_TIME, DELAYED, BOARDING, IN_AIR, CANCELLED, LANDED }
@@ -149,7 +147,7 @@ contract EagleAirline {
     event CustomerRegistered(string name);
     event FlightRegistered(uint flightNum, string flightName);
     event FlightUpdate(uint flightNum, string uMsg);
-    event TicketReserved(uint ticketNum, address indexed ticketAddress);
+    event TicketReserved(uint ticketNumber, address indexed ticketContractAddress);
     //event ErrorMessage(string errorMessage);
     //event InfoMessage(string infoMessage);
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -550,7 +548,7 @@ contract EagleAirline {
         flight.flightSts = flightSts;
         //flight.flightStsTS = block.timestamp;
         flight.delayMinutes = delayMinutes;
-        if (currTime > (flight.schDepTS - (24 * _TIME_UNITS)) && currTime < flight.schDepTS) {
+        if (currTime > (flight.schDepTS - (24 * EagleLib.TIME_UNITS)) && currTime < flight.schDepTS) {
             // IS the status being updated within the 24 hour window 
             flight.preflightStsTS = currTime;
         }
