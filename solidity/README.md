@@ -8,4 +8,5 @@ ACSE IITM Capstone Project – Blockchain based Ticket Management
     Reema Chhetri
     Sachin Ghewde (SG) - <sachingg@hotmail.com>
 
-
+## Contract Structure
+    ![Contract Structure]("contract_structure.jpg")
