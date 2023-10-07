@@ -554,7 +554,7 @@ contract EagleAirline {
             // IS the status being updated within the 24 hour window 
             flight.preflightStsTS = currTime;
         }
-        if (flightSts == FL_LAND)
+        if (flightSts == FL_LAND || flightSts == FL_CNCL)
             success = _closeFlight(flightNum, flightSts, flight.schDepTS, flight.actDepTS, flight.preflightStsTS);
         emit FlightUpdate(flightNum, stsTxt);
     }
