@@ -8,4 +8,14 @@ ACSE IITM Capstone Project – Blockchain based Ticket Management
     Reema Chhetri
     Sachin Ghewde (SG) - <sachingg@hotmail.com>
 
+## Contract Structure
+![Contract Structure](contract_structure.jpg "Contract Stucture")
 
+## Airline functions
+![Airline Functions](airline_functions.jpg "Airline Functions")
+
+## Operator functions
+![Operator Functions](operator_functions.jpg "Operator Functions")
+
+## Customer functions
+![Customer Functions](customer_functions.jpg "Customer Functions")
