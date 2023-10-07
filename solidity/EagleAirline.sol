@@ -57,9 +57,10 @@ contract EagleAirline {
     // DATA MEMBERS
     /// Airline Type - enumerates various Airline types
     enum OpType { DOM, INT } // DOMESTIC, INTERNATIONAL
+    uint private constant _TIME_UNITS = 1 minutes; // 1 hours; i.e. (60 * 60) seconds // FOR TESTING use 1 minutes i.e. (60) seconds
     uint8 public constant MAX_SEATS = 100;
     uint public constant T_PRICE_DOM = 10 * 1e18; // * 10 ** 18; // ether;
-    uint public constant T_PRICE_INT = 50 * 1e18; // * 10 ** 18; //ether;
+    uint public constant T_PRICE_INT = 25 * 1e18; // * 10 ** 18; // ether;
     
     // flightSts - enumerates various flight states
     //enum flightSts { DOES_NOT_EXIST, SCHEDULED, ON_TIME, DELAYED, BOARDING, IN_AIR, CANCELLED, LANDED }
@@ -112,7 +113,6 @@ contract EagleAirline {
     mapping(uint => FlightInfo) private flightMap; // flightNum => FlightInfo
     // TicketInfo - contains all the Ticket information
     struct TicketInfo {
-        //uint secretKey;
         address ticketContract;
         uint ticketNum; // "1234567890123" unique 13-digit number
         address buyer; // buyer
@@ -120,9 +120,6 @@ contract EagleAirline {
         //string seatCategory; // "Economy"
         string seatNum; // "A24"
         uint ticketAmount;
-        //bool pending;
-        //bool confirmed;
-        //bool closed;
         bool active;
     }
     mapping(address => TicketInfo) private reservedTickMap; // ticketAddress => pending TicketInfo
@@ -264,12 +261,12 @@ contract EagleAirline {
     }
 
     function flightOnTime(uint flightNum) onlyOperator(flightNum)  public returns (bool) {
-        return _updateflightSts(flightNum, "ON-TIME", FL_ONTIME, 0);
+        return _updateflightStatus(flightNum, "ON-TIME", FL_ONTIME, 0);
     }
 
     function flightDelayed(uint flightNum, uint estDelayMinutes) onlyOperator(flightNum)  public returns (bool) {
         require(estDelayMinutes > 0, "ERR: Inv delay time");
-        return _updateflightSts(flightNum, string.concat("DELAYED (min): ", EagleLib.uintToString (estDelayMinutes)), FL_DLYD, estDelayMinutes);
+        return _updateflightStatus(flightNum, string.concat("DELAYED (min): ", EagleLib.uintToString (estDelayMinutes)), FL_DLYD, estDelayMinutes);
     }
 
     function flightBoarding(uint flightNum) onlyOperator(flightNum) public returns (bool) {
@@ -280,7 +277,7 @@ contract EagleAirline {
             : flightMap[flightNum].delayMinutes
         );
         flightMap[flightNum].seatsAvl = false;
-        return _updateflightSts(flightNum, "BOARDING", FL_BRDG, calcDelayMinutes);
+        return _updateflightStatus(flightNum, "BOARDING", FL_BRDG, calcDelayMinutes);
     }
 
     function flightInAir(uint flightNum) onlyOperator(flightNum) public returns (bool) {
@@ -291,7 +288,7 @@ contract EagleAirline {
             : 0
         );
         flightMap[flightNum].actDepTS = currTime;
-        return _updateflightSts(flightNum, "IN-AIR", FL_AIR, calcDelayMinutes);
+        return _updateflightStatus(flightNum, "IN-AIR", FL_AIR, calcDelayMinutes);
     }
 
     function flightCancelled(uint flightNum) onlyOperator(flightNum) public returns (bool) {
@@ -303,7 +300,7 @@ contract EagleAirline {
         flightMap[flightNum].actDepTS = 0;
         flightMap[flightNum].actArrTS = 0;
         flightMap[flightNum].seatsAvl = false;
-        return _updateflightSts(flightNum, "CANCELLED", FL_CNCL, 0);
+        return _updateflightStatus(flightNum, "CANCELLED", FL_CNCL, 0);
     }
 
     function flightLanded(uint flightNum) onlyOperator(flightNum) public returns (bool) {
@@ -316,7 +313,7 @@ contract EagleAirline {
         );
         flightMap[flightNum].actArrTS = currTime;
         flightMap[flightNum].seatsAvl = false;
-        return _updateflightSts(flightNum, "LANDED", FL_LAND, calcDelayMinutes);
+        return _updateflightStatus(flightNum, "LANDED", FL_LAND, calcDelayMinutes);
     }
 
     /*
@@ -453,7 +450,7 @@ contract EagleAirline {
     /*
     * Flight status functions - Allows anyone to check the status of a flight
     */
-    function checkflightSts(uint flightNum) public view returns (string memory) {
+    function checkflightStatus(uint flightNum) public view returns (string memory) {
         require (flightNum == flightMap[flightNum].flightNum, "Unknown Flight");
         uint8 fSts = flightMap[flightNum].flightSts; //f lightStatus
         bool tAvl = flightMap[flightNum].seatsAvl; // seatsAvl
@@ -482,12 +479,12 @@ contract EagleAirline {
         }
     }
     //
-    function getflightSts(uint flightNum) public view returns (uint8) {
+    function getflightStatus(uint flightNum) public view returns (uint8) {
         require (flightNum == flightMap[flightNum].flightNum, "ERR: Unknown Flight");
         return flightMap[flightNum].flightSts;
     }
     //
-    function getflightStsTime(uint flightNum) public view returns (uint8, uint, uint, uint, uint, uint) {
+    function getflightStatusTime(uint flightNum) public view returns (uint8, uint, uint, uint, uint, uint) {
         require (flightMap[flightNum].active, "ERR: Unknown Flight");
         FlightInfo memory flight = flightMap[flightNum];
         uint8 flightSts = flight.flightSts;
@@ -547,13 +544,13 @@ contract EagleAirline {
     /*
     * update flighht - Allows Airline operator to update Flight status 
     */
-    function _updateflightSts (uint flightNum, string memory stsTxt, uint8 flightSts, uint delayMinutes) private returns (bool success) {
+    function _updateflightStatus (uint flightNum, string memory stsTxt, uint8 flightSts, uint delayMinutes) private returns (bool success) {
         uint currTime = block.timestamp;
         FlightInfo storage flight = flightMap[flightNum];
         flight.flightSts = flightSts;
         //flight.flightStsTS = block.timestamp;
         flight.delayMinutes = delayMinutes;
-        if (currTime > (flight.schDepTS - 24 hours) && currTime < flight.schDepTS) {
+        if (currTime > (flight.schDepTS - (24 * _TIME_UNITS)) && currTime < flight.schDepTS) {
             // IS the status being updated within the 24 hour window 
             flight.preflightStsTS = currTime;
         }

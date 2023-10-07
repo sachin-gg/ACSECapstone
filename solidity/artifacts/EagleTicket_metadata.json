@@ -1,0 +1,402 @@
+{
+	"compiler": {
+		"version": "0.8.18+commit.87f61d96"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "eagleAir",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "operatorAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "buyerAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "ticketNumber",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "flightNumber",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "seatNumber",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "ticketAmount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "schDepartureTimeStamp",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "contractName",
+						"type": "string"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "contractAddress",
+						"type": "address"
+					}
+				],
+				"name": "ContractCreated",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "errorMessage",
+						"type": "string"
+					}
+				],
+				"name": "ErrorMessage",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "infoMessage",
+						"type": "string"
+					}
+				],
+				"name": "InfoMessage",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "ticketNumber",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "message",
+						"type": "string"
+					}
+				],
+				"name": "TicketCancelled",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "ticketNumber",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "message",
+						"type": "string"
+					}
+				],
+				"name": "TicketClosed",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "flightNumber",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "ticketNumber",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "transferredAmount",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "collectedAmount",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "message",
+						"type": "string"
+					}
+				],
+				"name": "TicketConfirmed",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "ticketNumber",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "message",
+						"type": "string"
+					}
+				],
+				"name": "TicketRefundClaimed",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "ticketNumber",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "flightNumber",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "seatNumber",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "ticketStatus",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "paymentStatus",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "collectedAmount",
+						"type": "uint256"
+					}
+				],
+				"name": "ViewTicket",
+				"type": "event"
+			},
+			{
+				"inputs": [],
+				"name": "cancelTicket",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "success",
+						"type": "bool"
+					},
+					{
+						"internalType": "string",
+						"name": "message",
+						"type": "string"
+					}
+				],
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "claimRefund",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "success",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint8",
+						"name": "flightStatus",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint256",
+						"name": "schDepartTS",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "actDepartTS",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "preflightStsTS",
+						"type": "uint256"
+					}
+				],
+				"name": "closeTicket",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "success",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "confirmTicket",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "success",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "seatNumber",
+						"type": "string"
+					}
+				],
+				"name": "selectSeat",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "success",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "viewTicketInfo",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"solidity/EagleTicket.sol": "EagleTicket"
+		},
+		"evmVersion": "paris",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"hardhat/console.sol": {
+			"keccak256": "0x7434453e6d3b7d0e5d0eb7846ffdbc27f0ccf3b163591263739b628074dc103a",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://49355f780520494d1d5a0f01858385e51bb5280ce0ecfb960f16995065dca395",
+				"dweb:/ipfs/QmSwJ6C5QLz6xKeQZS8wbwjU1KxRFTYfwbGmtzisd5sRW4"
+			]
+		},
+		"solidity/EagleAirline.sol": {
+			"keccak256": "0xced9486143e40b7caa5a1227c732b4822a6a6d7811a14109a02c00d9db5fbe2b",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://bca6b1a0aedb1ed83100d3888dbd959eabc45856abf7cf2f4882a8b7ee429dd1",
+				"dweb:/ipfs/QmYspjCfiKFr8EDSpJxwtoWwwnjfXZ6eqagaBnPuMs5CG2"
+			]
+		},
+		"solidity/EagleLib.sol": {
+			"keccak256": "0xeedb05abac66c232ba13dec06854448c79f20373a8e04f7f1e467472140ea8ee",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://e7e055bcad1c5f39258dc054d1689762dcfb50bde4b1bf0194ba28b0d3e034a3",
+				"dweb:/ipfs/QmbFT27nUmKARGfvAp3F2GfGTrvJahqqdeZwQBGUBj87LK"
+			]
+		},
+		"solidity/EagleTicket.sol": {
+			"keccak256": "0xb0f2fb5b9e8ca6877e87275fd13079f33cbea4674b01b4cde69cb7593dbbf87f",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://e51d69266ea25bcd7e6a1d65fc9e97f07a74ef849d6cc2cbd3ea7745443e4f47",
+				"dweb:/ipfs/QmTUMhCCm526rke7D7DMHsqYxBivkhzXd2E8eyb3NXNVKG"
+			]
+		}
+	},
+	"version": 1
+}
