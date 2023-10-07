@@ -10,7 +10,6 @@ ACSE IITM Capstone Project – Blockchain based Ticket Management
 
 ## Contract Structure
 ![Contract Structure](contract_structure.jpg "Contract Stucture")
-<img alt="Contract Structure" src="contract_structure.jpg" width="425"/>
 
 ## Airline functions
 ![Airline Functions](airline_functions.jpg "Airline Functions")
