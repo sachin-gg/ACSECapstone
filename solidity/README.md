@@ -9,13 +9,14 @@ ACSE IITM Capstone Project – Blockchain based Ticket Management
     Sachin Ghewde (SG) - <sachingg@hotmail.com>
 
 ## Contract Structure
-![Contract Structure](contract_structure.jpg "Contract Stucture" =50%x)
+![Contract Structure](contract_structure.jpg "Contract Stucture")
+<img alt="Contract Structure" src="contract_structure" width="425"/>
 
 ## Airline functions
-![Airline Functions](airline_functions.jpg "Airline Functions" =50%x)
+![Airline Functions](airline_functions.jpg "Airline Functions")
 
 ## Operator functions
-![Operator Functions](operator_functions.jpg "Operator Functions" =50%x)
+![Operator Functions](operator_functions.jpg "Operator Functions")
 
 ## Customer functions
-![Customer Functions](customer_functions.jpg "Customer Functions" =50%x)
+![Customer Functions](customer_functions.jpg "Customer Functions")
