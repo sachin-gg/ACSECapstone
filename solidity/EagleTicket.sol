@@ -40,6 +40,7 @@ contract EagleTicket {
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // DATA MEMBERS
     // FlightStatus - enumerates various flight states
+    uint private constant _TIME_UNITS = 1 minutes; // 1 hours; i.e. (60 * 60) seconds // FOR TESTING use 1 minutes i.e. (60) seconds
     uint8 private constant FLIGHT_SCHEDULED = 0;
     uint8 private constant FLIGHT_ON_TIME = 1;
     uint8 private constant FLIGHT_DELAYED = 2;
@@ -200,7 +201,7 @@ contract EagleTicket {
     /*
     * COMPLETE PURCHASE - Allows buyers to pay & complete payment for the ticket
     */
-    function completePayment () external payable OnlyBuyer returns (bool success) {
+    function confirmTicket () external payable OnlyBuyer returns (bool success) {
         success = false;
         uint ticketPrice =  _ticketInfo.ticketAmount;
         //console.log(msg.value, ticketPrice);
@@ -412,7 +413,7 @@ contract EagleTicket {
         require(_paymentStatus == PAYMENT_COLLECTED, "ERR: Refund not applicable"); // payment was never collected or has already be refunded/paid
         uint currTime = block.timestamp;
         (uint8 flightStatus, uint schDeparturetTS,, uint newDeparturetTS,, uint preflightStsTS) = _eagleAirline.getflightStsTime(_ticketInfo.flightNumber);
-        require (currTime - schDeparturetTS >= 24 hours, "ERR: Ticket not elligible for claim");
+        require (currTime - schDeparturetTS >= (24 * _TIME_UNITS), "ERR: Ticket not elligible for claim");
         //
         // Calculate Refund percent based on Delay Time
         uint timeBasisSeconds = _calculateDelaytime(flightStatus, schDeparturetTS, newDeparturetTS, preflightStsTS);
@@ -500,13 +501,13 @@ contract EagleTicket {
 
     function _calculateDelaytime(uint8 flightStatus, uint schDeparturetTS, uint actDepartureTS, uint preflightStsTS) private view returns (uint) {
          if (flightStatus == FLIGHT_CANCELLED) {
-            return 24 hours; // Note: Flight cancellation should have already cancelled the ticket and refunded 100%
+            return (24 * _TIME_UNITS); // Note: Flight cancellation should have already cancelled the ticket and refunded 100%
             //percentRefund = 100; // 100 %
         } else if (flightStatus < FLIGHT_CANCELLED  
-            && schDeparturetTS - preflightStsTS > 24 hours
+            && schDeparturetTS - preflightStsTS > (24 * _TIME_UNITS)
         ) {
             // Check if the Airline delayed to update status within 24 hours of the schedueld departure time 
-           return 24 hours;
+           return (24 * _TIME_UNITS);
            //percentRefund = 100; // 100 %
         }
          else if (
@@ -528,11 +529,11 @@ contract EagleTicket {
         if (flightStatus == FLIGHT_CANCELLED)
             return 100;
         //
-        if (timeBasisSeconds >= 24 hours)
+        if (timeBasisSeconds >= (24 * _TIME_UNITS)
             return (isTicketCancellation) ? 100 : 100;
-        else if (timeBasisSeconds >= 10 hours && timeBasisSeconds < 24 hours)
+        else if (timeBasisSeconds >= (10 * _TIME_UNITS) && timeBasisSeconds < (24 * _TIME_UNITS))
             return (isTicketCancellation) ? 80 : 40;
-        else if (timeBasisSeconds >= 2 hours && timeBasisSeconds < 10 hours)
+        else if (timeBasisSeconds >= (2 * _TIME_UNITS) && timeBasisSeconds < (10 * _TIME_UNITS))
             return (isTicketCancellation) ? 40 : 10;
         else
             return 0;
