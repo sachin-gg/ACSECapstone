@@ -505,7 +505,7 @@ contract EagleAirline {
             newDeparturetTS = 0;
             newArrivalTS = 0;
         }
-        return (flightSts, schDeparturetTS, newDeparturetTS, newDeparturetTS, newArrivalTS, preflightStsTS);
+        return (flightSts, schDeparturetTS, newDeparturetTS, schArrivalTS, newArrivalTS, preflightStsTS);
     }
     
     ///////////////////////////////////////////////////////////////////////////////////////////////

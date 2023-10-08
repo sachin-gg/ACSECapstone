@@ -273,7 +273,7 @@ contract EagleTicket {
             console.log("currTime = ", currTime);
             uint timeBasisSeconds = (_ticketInfo.schDepartureTimeStamp > currTime) ? _ticketInfo.schDepartureTimeStamp - currTime : 0;
             // Calculate refund
-            uint8 percentRefund = _getPercentRefund(timeBasisSeconds, flightStatus, true);
+            uint percentRefund = _getPercentRefund(timeBasisSeconds, flightStatus, true);
             require(percentRefund > 0, "ERR: Ticket cancellation window closed");
             _ticketStatus = TICKET_CANCELLATION_IN_PROGRESS;
             _ticketStatusTimeStamp = currTime;
@@ -287,8 +287,11 @@ contract EagleTicket {
             uint balanceAmount = address(this).balance;
             //if (balanceAmount >= _ticketInfo.collectedAmount) {     
             if (balanceAmount > 0) {
-                refundAmount = balanceAmount * (percentRefund / 100.00);
+                refundAmount = (balanceAmount * percentRefund) / 100;
                 payAmount = balanceAmount - refundAmount; // balance
+                console.log("balanceAmount = ", balanceAmount);
+                console.log("refundAmount = ", refundAmount);
+                console.log("payAmount = ", payAmount);
                 // Refund the Buyer first
                 if (refundAmount > 0) {
                     (refundCallSuccess, ) = payable(_buyerAddress).call{value: refundAmount}("");
@@ -348,8 +351,11 @@ contract EagleTicket {
             //if (balanceAmount >= _ticketInfo.collectedAmount) {  
             if (balanceAmount > 0) {
                 uint8 percentRefund = _getPercentRefund(delaytime, flightStatus, false);
-                refundAmount = balanceAmount * (percentRefund/100.00);
+                refundAmount = (balanceAmount * percentRefund) / 100;
                 payAmount = balanceAmount - refundAmount;
+                console.log("balanceAmount = ", balanceAmount);
+                console.log("refundAmount = ", refundAmount);
+                console.log("payAmount = ", payAmount);
                 //refundAmount = (flightStatus == FLIGHT_CANCELLED) ? _ticketInfo.collectedAmount : 0;
                 //payAmount = (flightStatus == FLIGHT_LANDED) ? _ticketInfo.collectedAmount : 0;
                 // Refund the Buyer
@@ -418,7 +424,7 @@ contract EagleTicket {
         //
         require(_paymentStatus == PAYMENT_COLLECTED, "ERR: Refund not applicable"); // payment was never collected or has already be refunded/paid
         uint currTime = block.timestamp;
-        (uint8 flightStatus, uint schDeparturetTS,, uint newDeparturetTS,, uint preflightStsTS) = _eagleAirline.getflightStatusTime(_ticketInfo.flightNumber);
+        (uint8 flightStatus, uint schDeparturetTS, uint newDeparturetTS,,, uint preflightStsTS) = _eagleAirline.getflightStatusTime(_ticketInfo.flightNumber);
         require (currTime - schDeparturetTS >= (24 * EagleLib.TIME_UNITS), "ERR: Ticket not elligible for claim");
         //
         // Calculate Refund percent based on Delay Time
@@ -434,8 +440,11 @@ contract EagleTicket {
         //if (ARMSToken(_tokenARMS).balanceOf(address(this)) > _ticketInfo.collectedAmount) {  
         //if (balanceAmount > _ticketInfo.collectedAmount) {   
         if (balanceAmount > 0) {
-            refundAmount = balanceAmount * (percentRefund / 100); 
+            refundAmount = (balanceAmount * percentRefund) / 100;
             payAmount = balanceAmount - refundAmount; // balance 
+            console.log("balanceAmount = ", balanceAmount);
+            console.log("refundAmount = ", refundAmount);
+            console.log("payAmount = ", payAmount);
             // Refund the Buyer
             if (refundAmount > 0) {
                 //refundCallSuccess = ARMSToken(_tokenARMS).transfer(payable(_buyerAddress), refundAmount);
@@ -536,14 +545,19 @@ contract EagleTicket {
         if (flightStatus == FLIGHT_CANCELLED)
             return 100;
         //
-        if (timeBasisSeconds >= (24 * EagleLib.TIME_UNITS))
+        if (timeBasisSeconds >= (24 * EagleLib.TIME_UNITS)) {
+            console.log("Refund% = ", (isTicketCancellation) ? 100 : 100);
             return (isTicketCancellation) ? 100 : 100;
-        else if (timeBasisSeconds >= (10 * EagleLib.TIME_UNITS) && timeBasisSeconds < (24 * EagleLib.TIME_UNITS))
+        }  else if (timeBasisSeconds >= (10 * EagleLib.TIME_UNITS) && timeBasisSeconds < (24 * EagleLib.TIME_UNITS)) {
+            console.log("Refund% = ", (isTicketCancellation) ? 80 : 40);
             return (isTicketCancellation) ? 80 : 40;
-        else if (timeBasisSeconds >= (2 * EagleLib.TIME_UNITS) && timeBasisSeconds < (10 * EagleLib.TIME_UNITS))
+        }  else if (timeBasisSeconds >= (2 * EagleLib.TIME_UNITS) && timeBasisSeconds < (10 * EagleLib.TIME_UNITS)) {
+            console.log("Refund% = ", (isTicketCancellation) ? 40 : 10);
             return (isTicketCancellation) ? 40 : 10;
-        else
+        } else {
+            console.log("Refund% = ", 0);
             return 0;
+        }
     }
 
     function _settlePayment(uint refundedAmount, uint paidAmount) private returns (bool) {
