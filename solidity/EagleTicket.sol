@@ -285,7 +285,8 @@ contract EagleTicket {
             bool payCallSuccess;
             // Balance has to be >= the collected payment
             uint balanceAmount = address(this).balance;
-            if (balanceAmount >= _ticketInfo.collectedAmount) {     
+            //if (balanceAmount >= _ticketInfo.collectedAmount) {     
+            if (balanceAmount > 0) {
                 refundAmount = balanceAmount * (percentRefund / 100.00);
                 payAmount = balanceAmount - refundAmount; // balance
                 // Refund the Buyer first
@@ -344,7 +345,8 @@ contract EagleTicket {
             bool refundCallSuccess;
             bool payCallSuccess;
             // Balance has to be >= the collected payment
-            if (balanceAmount > _ticketInfo.collectedAmount) {  
+            //if (balanceAmount >= _ticketInfo.collectedAmount) {  
+            if (balanceAmount > 0) {
                 uint8 percentRefund = _getPercentRefund(delaytime, flightStatus, false);
                 refundAmount = balanceAmount * (percentRefund/100.00);
                 payAmount = balanceAmount - refundAmount;
@@ -430,9 +432,10 @@ contract EagleTicket {
         // Balance has to be >= the collected payment
         uint balanceAmount = address(this).balance;
         //if (ARMSToken(_tokenARMS).balanceOf(address(this)) > _ticketInfo.collectedAmount) {  
-        if (balanceAmount > _ticketInfo.collectedAmount) {   
-            refundAmount = _ticketInfo.collectedAmount * (percentRefund / 100); 
-            payAmount = _ticketInfo.collectedAmount - refundAmount; // balance 
+        //if (balanceAmount > _ticketInfo.collectedAmount) {   
+        if (balanceAmount > 0) {
+            refundAmount = balanceAmount * (percentRefund / 100); 
+            payAmount = balanceAmount - refundAmount; // balance 
             // Refund the Buyer
             if (refundAmount > 0) {
                 //refundCallSuccess = ARMSToken(_tokenARMS).transfer(payable(_buyerAddress), refundAmount);
